@@ -73,49 +73,54 @@ def get_credentials():
 # ── 4 & 5. Create DB + run schema ───────────────────────────
 def setup_database(host, user, password, db_name):
     step(4, f"Creating database '{db_name}'…")
+
     try:
         import mysql.connector
     except ImportError:
         fail("mysql-connector-python not found. Run: pip install mysql-connector-python")
 
-    # Connect without DB to create it
     try:
-        conn = mysql.connector.connect(host=host, user=user, password=password)
+        conn = mysql.connector.connect(
+            host=host,
+            user=user,
+            password=password
+        )
     except Exception as e:
         fail(f"Cannot connect to MySQL: {e}")
 
     cur = conn.cursor()
-    cur.execute(f"CREATE DATABASE IF NOT EXISTS `{db_name}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
+
+    cur.execute(
+        f"CREATE DATABASE IF NOT EXISTS `{db_name}` "
+        "CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+    )
     conn.commit()
     ok(f"Database '{db_name}' ready.")
 
+    # ---------------- RUN SCHEMA ----------------
     step(5, "Running schema.sql…")
+
     schema_path = os.path.join(os.path.dirname(__file__), "schema.sql")
+
     with open(schema_path, "r", encoding="utf-8") as f:
         sql_raw = f.read()
 
-    # Switch to drdo_portal DB
-    conn.database = db_name
+    # switch DB
+    cur.execute(f"USE {db_name}")
 
-    # Split and execute statements
     import re
-    statements = [s.strip() for s in re.split(r';\s*\n', sql_raw) if s.strip() and not s.strip().startswith("--")]
-    skipped = 0
+    sql_cleaned = re.sub(r'--[^\n]*', '', sql_raw)
+    statements = [s.strip() for s in sql_cleaned.split(";") if s.strip()]
+
     for stmt in statements:
-        stmt = stmt.strip().rstrip(";")
-        if not stmt or stmt.upper().startswith("CREATE DATABASE") or stmt.upper().startswith("USE "):
-            continue
         try:
             cur.execute(stmt)
+            conn.commit()
         except mysql.connector.Error as e:
-            if e.errno in (1050, 1062):  # table exists / dup entry
-                skipped += 1
-            else:
-                warn(f"SQL warning: {e}")
-    conn.commit()
-    if skipped:
-        warn(f"{skipped} statement(s) skipped (already exist — that's fine).")
+            warn(f"SQL warning ({e.errno}): {e.msg}")
+
     ok("Schema applied — tables and seed positions created.")
+
     return conn, cur
 
 # ── 6. Create demo accounts ─────────────────────────────────

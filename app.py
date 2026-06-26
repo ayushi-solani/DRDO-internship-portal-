@@ -22,7 +22,7 @@ app.secret_key = os.environ.get("SECRET_KEY", "drdo-secret-2024-change-in-prod")
 DB_CONFIG = {
     "host":     os.environ.get("DB_HOST", "localhost"),
     "user":     os.environ.get("DB_USER", "root"),
-    "password": os.environ.get("DB_PASS", "12345678"),          # ← set your MySQL password
+    "password": os.environ.get("DB_PASS", "root"),          # ← set your MySQL password
     "database": os.environ.get("DB_NAME", "drdo_portal"),
     "autocommit": False,
 }
