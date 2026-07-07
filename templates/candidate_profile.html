@@ -9,7 +9,7 @@
 <div class="card fade-in">
   <div class="card-header"><i class="bi bi-pencil-square me-2 text-muted"></i>Academic & Personal Details</div>
   <div class="card-body p-4">
-    <form method="POST">
+    <form method="POST" enctype="multipart/form-data">
       <div class="row g-3">
         <div class="col-md-4">
           <label class="form-label">Date of Birth</label>
@@ -59,6 +59,22 @@
           <label class="form-label">Skills</label>
           <textarea name="skills" rows="3" class="form-control" placeholder="Python, Machine Learning, C++, MATLAB, CAD, etc.">{{ profile.skills or '' }}</textarea>
         </div>
+
+        <div class="col-12"><hr class="my-1"/><p class="fw-semibold mb-0" style="font-size:.82rem;color:#6b7280;text-transform:uppercase;letter-spacing:.8px;">Resume</p></div>
+
+        <div class="col-12">
+          <label class="form-label">Upload Resume (PDF)</label>
+          <input type="file" name="resume" accept=".pdf" class="form-control"/>
+          {% if profile.resume_url %}
+          <div class="form-text">
+            <i class="bi bi-file-earmark-pdf me-1"></i>
+            Current file: <a href="{{ url_for('static', filename=profile.resume_url) }}" target="_blank">{{ profile.resume_url.split('/')[-1] }}</a>
+            — uploading a new one will replace it and re-run the match.
+          </div>
+          {% else %}
+          <div class="form-text">Upload your resume to see which internship track best matches your profile.</div>
+          {% endif %}
+        </div>
       </div>
 
       <div class="mt-4 d-flex justify-content-end gap-2">
@@ -68,4 +84,48 @@
     </form>
   </div>
 </div>
+
+{% if resume_match %}
+<div class="card fade-in mt-4">
+  <div class="card-header"><i class="bi bi-magic me-2 text-muted"></i>Resume Match Results</div>
+  <div class="card-body p-4">
+    <div class="d-flex align-items-center gap-3 mb-3 p-3" style="background:#f0f4f8;border-radius:10px;">
+      <div style="width:52px;height:52px;background:linear-gradient(135deg,#003366,#004080);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="bi bi-trophy text-white" style="font-size:1.3rem;"></i>
+      </div>
+      <div>
+        <div style="font-size:.75rem;color:#6b7280;text-transform:uppercase;letter-spacing:.6px;">Best-Fit Track</div>
+        <div class="fw-bold" style="font-size:1.05rem;color:#003366;">
+          {{ resume_match.best_role }} <span class="text-muted fw-normal">({{ "%.1f"|format(resume_match.best_pct) }}% match)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-sm table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Job Role</th>
+            <th class="text-end">ML Match %</th>
+            <th class="text-end">Similarity %</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in resume_match.breakdown %}
+          <tr class="{{ 'table-primary' if r.role == resume_match.best_role }}">
+            <td>{{ r.role }}</td>
+            <td class="text-end">{{ "%.1f"|format(r.ml_match_pct) }}%</td>
+            <td class="text-end">{{ "%.1f"|format(r.similarity_pct) }}%</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="text-muted mt-3 mb-0" style="font-size:.78rem;">
+      ML Match % is the model's predicted probability your resume fits each track (sums to 100%). Similarity % is an independent
+      cosine-similarity score against that track's job postings, useful for sanity-checking the verdict.
+    </p>
+  </div>
+</div>
+{% endif %}
 {% endblock %}
