@@ -1,29 +1,62 @@
 {% extends "base.html" %}
 {% block title_suffix %} | Admin Dashboard{% endblock %}
 {% block content %}
-<div class="page-header fade-in">
-  <h4><i class="bi bi-speedometer2 me-2"></i>Admin Control Panel</h4>
-  <p>Manage users, HR accounts and monitor system-wide statistics.</p>
+
+<div class="page-header fade-in mb-4">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h4 class="mb-1"><i class="bi bi-speedometer2 me-2"></i>Admin Control Panel</h4>
+      <p class="mb-0">Manage users, HR accounts and monitor system-wide statistics.</p>
+    </div>
+    {% if stats.pending_hr > 0 %}
+    <span class="badge" style="background:#fee2e2;color:#991b1b;font-size:.8rem;padding:.5em 1em;border-radius:999px;">
+      <i class="bi bi-exclamation-triangle me-1"></i>{{ stats.pending_hr }} HR account(s) pending approval
+    </span>
+    {% endif %}
+  </div>
 </div>
 
 <div class="row g-3 mb-4">
-  {% set cards = [
-    ('Total Users',   stats.users,        'bi-people-fill',     '#003366','#004080'),
-    ('HR Officers',   stats.hrs,          'bi-person-badge-fill','#c2410c','#ea580c'),
-    ('Candidates',    stats.candidates,   'bi-mortarboard-fill', '#065f46','#10b981'),
-    ('Positions',     stats.positions,    'bi-briefcase-fill',   '#1d4ed8','#3b82f6'),
-    ('Applications',  stats.applications, 'bi-file-earmark-fill','#6b21a8','#a855f7'),
-  ] %}
-  {% for label, val, icon, c1, c2 in cards %}
-  <div class="col-6 col-md fade-in" style="animation-delay:{{ loop.index0 * 0.05 }}s">
-    <div class="card stat-card text-white" style="background:linear-gradient(135deg,{{ c1 }},{{ c2 }})">
+  <div class="col-6 col-md fade-in fade-in-1">
+    <div class="card stat-card text-white" style="background:linear-gradient(135deg,#003366,#004080)">
       <div class="card-body d-flex align-items-center gap-3">
-        <i class="bi {{ icon }} stat-icon"></i>
-        <div><div class="stat-value">{{ val }}</div><div class="stat-label">{{ label }}</div></div>
+        <i class="bi bi-people-fill stat-icon"></i>
+        <div><div class="stat-value">{{ stats.users }}</div><div class="stat-label">Total Users</div></div>
       </div>
     </div>
   </div>
-  {% endfor %}
+  <div class="col-6 col-md fade-in fade-in-2">
+    <div class="card stat-card text-white" style="background:linear-gradient(135deg,#c2410c,#ea580c)">
+      <div class="card-body d-flex align-items-center gap-3">
+        <i class="bi bi-person-badge-fill stat-icon"></i>
+        <div><div class="stat-value">{{ stats.hrs }}</div><div class="stat-label">HR Officers</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md fade-in fade-in-3">
+    <div class="card stat-card text-white" style="background:linear-gradient(135deg,#065f46,#10b981)">
+      <div class="card-body d-flex align-items-center gap-3">
+        <i class="bi bi-mortarboard-fill stat-icon"></i>
+        <div><div class="stat-value">{{ stats.candidates }}</div><div class="stat-label">Candidates</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md fade-in fade-in-4">
+    <div class="card stat-card text-white" style="background:linear-gradient(135deg,#1d4ed8,#3b82f6)">
+      <div class="card-body d-flex align-items-center gap-3">
+        <i class="bi bi-briefcase-fill stat-icon"></i>
+        <div><div class="stat-value">{{ stats.positions }}</div><div class="stat-label">Positions</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md fade-in">
+    <div class="card stat-card text-white" style="background:linear-gradient(135deg,#6b21a8,#a855f7)">
+      <div class="card-body d-flex align-items-center gap-3">
+        <i class="bi bi-file-earmark-fill stat-icon"></i>
+        <div><div class="stat-value">{{ stats.applications }}</div><div class="stat-label">Applications</div></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Add HR -->
@@ -68,9 +101,9 @@
         <thead>
           <tr>
             <th class="ps-4">User</th>
-            <th>Phone</th>
+            <th class="d-none d-md-table-cell">Phone</th>
             <th>Role</th>
-            <th>Joined</th>
+            <th class="d-none d-md-table-cell">Joined</th>
             <th>Status</th>
             <th>Action</th>
           </tr>
@@ -87,7 +120,7 @@
                 </div>
               </div>
             </td>
-            <td style="font-size:.82rem;color:#6b7280;">{{ u.phone or '—' }}</td>
+            <td class="d-none d-md-table-cell" style="font-size:.82rem;color:#6b7280;">{{ u.phone or '—' }}</td>
             <td>
               {% if u.role == 'admin' %}
                 <span class="badge" style="background:#1f2937;color:#fff;border-radius:999px;">Admin</span>
@@ -97,19 +130,27 @@
                 <span class="badge" style="background:#d1fae5;color:#065f46;border-radius:999px;">Candidate</span>
               {% endif %}
             </td>
-            <td style="font-size:.8rem;color:#6b7280;">{{ u.created_at | datefmt }}</td>
+            <td class="d-none d-md-table-cell" style="font-size:.8rem;color:#6b7280;">{{ u.created_at | datefmt }}</td>
             <td>
               <span class="badge" style="border-radius:999px;background:{{ '#d1fae5' if u.is_active else '#fee2e2' }};color:{{ '#065f46' if u.is_active else '#991b1b' }};">
                 {{ 'Active' if u.is_active else 'Inactive' }}
               </span>
+              {% if u.role == 'hr' and not u.is_approved %}
+              <span class="badge ms-1" style="background:#fef3c7;color:#92400e;border-radius:999px;">Pending</span>
+              {% endif %}
             </td>
             <td>
               {% if u.role != 'admin' %}
-              <a href="{{ url_for('admin_toggle_user', uid=u.id) }}"
-                 class="btn btn-sm {{ 'btn-outline-danger' if u.is_active else 'btn-outline-success' }}"
-                 onclick="return confirm('Are you sure?')">
-                {{ 'Deactivate' if u.is_active else 'Activate' }}
-              </a>
+              <div class="d-flex gap-1">
+                {% if u.role == 'hr' and not u.is_approved %}
+                <a href="{{ url_for('admin_approve_user', uid=u.id) }}" class="btn btn-sm btn-outline-success">Approve</a>
+                {% endif %}
+                <a href="{{ url_for('admin_toggle_user', uid=u.id) }}"
+                   class="btn btn-sm {{ 'btn-outline-danger' if u.is_active else 'btn-outline-success' }}"
+                   onclick="return confirm('Are you sure?')">
+                  {{ 'Deactivate' if u.is_active else 'Activate' }}
+                </a>
+              </div>
               {% else %}
               <span class="text-muted" style="font-size:.8rem;">—</span>
               {% endif %}

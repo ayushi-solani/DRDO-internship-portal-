@@ -23,11 +23,7 @@
     font-weight: 700;
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   }
-  .login-header {
-    background: #fff;
-    padding: 1.75rem 2rem 1.25rem;
-    text-align: center;
-  }
+  .login-header { background: #fff; padding: 1.75rem 2rem 1.25rem; text-align: center; }
   .login-divider { width: 1px; height: 64px; background: #e5eaf2; }
   .login-body { background: #fff; padding: 1.5rem 2rem 2rem; border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
   .demo-box {
@@ -47,20 +43,15 @@
 
     <div class="gov-strip">GOVERNMENT OF INDIA &nbsp;&bull;&nbsp; MINISTRY OF DEFENCE</div>
 
-    <!-- Logos -->
     <div class="login-header">
       <div class="d-flex align-items-center justify-content-center gap-4">
-        <img src="{{ url_for('static', filename='images/india_emblem.svg') }}"
-             height="68" alt="Emblem of India"/>
-        <div class="login-divider"></div>
         <img src="{{ url_for('static', filename='images/drdo_logo.png') }}"
-             height="68" alt="DRDO Logo" style="object-fit:contain;"/>
+             height="68" alt="DRDO Logo" style="object-fit:contain;filter:none;"/>
       </div>
       <h5 class="fw-bold mt-3 mb-0" style="color:#003366;letter-spacing:.4px;">DRDO Internship Portal</h5>
       <p class="text-muted mb-0" style="font-size:.78rem;">Defence Research &amp; Development Organisation</p>
     </div>
 
-    <!-- Form -->
     <div class="login-body shadow">
       <p class="text-center text-muted mb-4" style="font-size:.8rem;letter-spacing:.5px;text-transform:uppercase;">
         <i class="bi bi-shield-lock me-1"></i>Secure Sign In
@@ -92,7 +83,6 @@
       </p>
     </div>
 
-    <!-- Demo credentials -->
     <div class="demo-box">
       <p class="fw-semibold text-white mb-2" style="font-size:.78rem;letter-spacing:.5px;text-transform:uppercase;">
         <i class="bi bi-info-circle me-1"></i>Demo Credentials
@@ -114,9 +104,6 @@
           <td class="text-warning fw-semibold">Alice@1234</td>
         </tr>
       </table>
-      <p class="mb-0" style="color:rgba(255,255,255,.45);font-size:.68rem;">
-        Run <code style="color:#FFD700;">python setup_demo.py</code> once to activate these accounts.
-      </p>
     </div>
 
     <p class="text-center mt-3" style="color:rgba(255,255,255,.3);font-size:.68rem;">

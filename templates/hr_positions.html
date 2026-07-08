@@ -1,11 +1,12 @@
 {% extends "base.html" %}
 {% block title_suffix %} | Manage Positions{% endblock %}
 {% block content %}
-<div class="page-header fade-in">
-  <div class="d-flex justify-content-between align-items-center">
+
+<div class="page-header fade-in mb-4" style="overflow:visible;">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
     <div>
-      <h4><i class="bi bi-briefcase me-2"></i>Internship Positions</h4>
-      <p>Create and manage open positions for candidates to apply.</p>
+      <h4 class="mb-1"><i class="bi bi-briefcase me-2"></i>Internship Positions</h4>
+      <p class="mb-0">Create and manage open positions for candidates to apply.</p>
     </div>
     <button class="btn btn-orange" data-bs-toggle="modal" data-bs-target="#addPositionModal">
       <i class="bi bi-plus-circle me-1"></i>Add Position
@@ -17,7 +18,7 @@
 <div class="row g-4">
   {% for pos in positions %}
   <div class="col-md-6 fade-in" style="animation-delay:{{ loop.index0 * 0.06 }}s">
-    <div class="card h-100 {{ '' if pos.is_active else '' }}" style="opacity:{{ '1' if pos.is_active else '0.65' }};border-top:4px solid {{ '#003366' if pos.is_active else '#9ca3af' }};">
+    <div class="card h-100" style="opacity:{{ '1' if pos.is_active else '0.65' }};border-top:4px solid {{ '#003366' if pos.is_active else '#9ca3af' }};">
       <div class="card-body p-4">
         <div class="d-flex justify-content-between align-items-start mb-3">
           <h5 class="fw-bold mb-0" style="font-size:.97rem;">{{ pos.title }}</h5>
@@ -26,13 +27,13 @@
           </span>
         </div>
         <p class="text-muted mb-3" style="font-size:.8rem;">
-          <i class="bi bi-building me-1"></i>{{ pos.department }}
+          <i class="bi bi-building me-1"></i>{{ pos.department or '—' }}
           &nbsp;&bull;&nbsp;
           <i class="bi bi-geo-alt me-1"></i>{{ pos.location }}
         </p>
         <div class="d-flex flex-wrap gap-2 mb-4">
           {% if pos.stipend %}
-          <span class="badge" style="background:#d1fae5;color:#065f46;border-radius:999px;">₹{{ "{:,.0f}".format(pos.stipend) }}/mo</span>
+          <span class="badge" style="background:#d1fae5;color:#065f46;border-radius:999px;">&#8377;{{ "{:,.0f}".format(pos.stipend) }}/mo</span>
           {% endif %}
           {% if pos.duration %}
           <span class="badge" style="background:#dbeafe;color:#1e40af;border-radius:999px;">{{ pos.duration }}</span>
@@ -47,8 +48,9 @@
             <i class="bi bi-people me-1"></i>{{ pos.applicant_count }} applicant(s)
           </span>
           <a href="{{ url_for('hr_toggle_position', pos_id=pos.id) }}"
-             class="btn btn-sm {{ 'btn-outline-danger' if pos.is_active else 'btn-outline-success' }}">
-            {{ 'Close' if pos.is_active else 'Re-open' }}
+             class="btn btn-sm {{ 'btn-outline-danger' if pos.is_active else 'btn-outline-success' }}"
+             onclick="return confirm('Are you sure?')">
+            {{ 'Close Position' if pos.is_active else 'Re-open' }}
           </a>
         </div>
       </div>
@@ -63,9 +65,11 @@
   </div>
   <h5 class="fw-bold mb-2">No Positions Yet</h5>
   <p class="text-muted mb-4" style="font-size:.88rem;">Create your first internship position to start receiving applications.</p>
-  <div><button class="btn btn-navy" data-bs-toggle="modal" data-bs-target="#addPositionModal">
-    <i class="bi bi-plus-circle me-2"></i>Create Position
-  </button></div>
+  <div>
+    <button class="btn btn-navy" data-bs-toggle="modal" data-bs-target="#addPositionModal">
+      <i class="bi bi-plus-circle me-2"></i>Create Position
+    </button>
+  </div>
 </div>
 {% endif %}
 
@@ -90,7 +94,12 @@
             </div>
             <div class="col-md-6">
               <label class="form-label">Department *</label>
-              <input type="text" name="department" class="form-control" required placeholder="e.g. Electronics & Radar"/>
+              <select name="department_id" class="form-select" required>
+                <option value="">Select Department</option>
+                {% for dept in departments %}
+                <option value="{{ dept.id }}">{{ dept.name }}</option>
+                {% endfor %}
+              </select>
             </div>
             <div class="col-md-6">
               <label class="form-label">Location</label>
@@ -101,7 +110,7 @@
               <input type="text" name="duration" class="form-control" placeholder="e.g. 2 Months"/>
             </div>
             <div class="col-md-4">
-              <label class="form-label">Stipend (₹/month)</label>
+              <label class="form-label">Stipend (&#8377;/month)</label>
               <input type="number" name="stipend" class="form-control" step="500" placeholder="e.g. 8000"/>
             </div>
             <div class="col-md-4">
@@ -126,4 +135,16 @@
     </div>
   </div>
 </div>
+
+
+
+{% block extra_js %}
+<script>
+document.getElementById('addPositionModal').addEventListener('hidden.bs.modal', function() {
+  document.body.classList.remove('modal-open');
+  document.body.style.removeProperty('overflow');
+  document.body.style.removeProperty('padding-right');
+  document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+});
+</script>
 {% endblock %}

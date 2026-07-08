@@ -13,9 +13,18 @@
 <body>
 
 <!-- ── NAVBAR ── -->
-<nav class="navbar navbar-expand-lg navbar-drdo">
-  <div class="container-fluid px-4">
-    <a class="navbar-brand d-flex align-items-center gap-3" href="/">
+<nav class="navbar navbar-drdo">
+  <div class="container-fluid px-4 d-flex align-items-center">
+
+    {% if session.user_id %}
+    <button class="navbar-toggler border-0 d-md-none me-2" type="button"
+            data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar"
+            aria-controls="mobileSidebar">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    {% endif %}
+
+    <a class="navbar-brand d-flex align-items-center gap-3 me-auto" href="/">
       <img src="{{ url_for('static', filename='images/drdo_logo.png') }}"
            height="38" alt="DRDO Logo"
            style="filter:brightness(0) invert(1); border-radius:4px;"/>
@@ -25,52 +34,100 @@
       </div>
     </a>
 
-    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-
-    <div class="collapse navbar-collapse justify-content-end" id="navMenu">
-      <ul class="navbar-nav align-items-center gap-2">
-        {% if session.user_id %}
-        <li class="nav-item d-flex align-items-center gap-2">
-          <div class="avatar" style="width:30px;height:30px;font-size:.75rem;">
-            {{ session.user_name[0].upper() }}
-          </div>
-          <span class="nav-link py-0 px-1">
-            <span style="font-size:.85rem;color:#fff;font-weight:500;">{{ session.user_name }}</span>
-            <span class="badge badge-role text-uppercase ms-1">{{ session.role }}</span>
-          </span>
-        </li>
-        <li class="nav-item">
-          <a class="btn btn-sm ms-1"
-             style="background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2);"
-             href="{{ url_for('logout') }}">
-            <i class="bi bi-box-arrow-right"></i> Logout
-          </a>
-        </li>
-        {% else %}
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('login') }}"><i class="bi bi-person"></i> Login</a>
-        </li>
-        <li class="nav-item">
-          <a class="btn btn-sm btn-orange" href="{{ url_for('register') }}">
-            <i class="bi bi-person-plus"></i> Register
-          </a>
-        </li>
-        {% endif %}
-      </ul>
+    <div class="d-flex align-items-center gap-2">
+      {% if session.user_id %}
+      <div class="avatar d-none d-md-flex" style="width:30px;height:30px;font-size:.75rem;">
+        {{ session.user_name[0].upper() }}
+      </div>
+      <span class="d-none d-md-inline" style="font-size:.85rem;color:#fff;font-weight:500;">{{ session.user_name }}</span>
+      <span class="badge badge-role text-uppercase d-none d-md-inline">{{ session.role }}</span>
+      <a class="btn btn-sm ms-1"
+         style="background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2);"
+         href="{{ url_for('logout') }}">
+        <i class="bi bi-box-arrow-right"></i> <span class="d-none d-md-inline">Logout</span>
+      </a>
+      {% else %}
+      <a class="btn btn-sm btn-outline-light me-1" href="{{ url_for('login') }}">
+        <i class="bi bi-person"></i> Login
+      </a>
+      <a class="btn btn-sm btn-orange" href="{{ url_for('register') }}">
+        <i class="bi bi-person-plus"></i> Register
+      </a>
+      {% endif %}
     </div>
+
   </div>
 </nav>
 
+<!-- ── MOBILE OFFCANVAS SIDEBAR ── -->
+{% if session.user_id %}
+<div class="offcanvas offcanvas-start" tabindex="-1" id="mobileSidebar"
+     style="width:260px;background:linear-gradient(180deg,#002244,#003366);">
+  <div class="offcanvas-header flex-column align-items-start pt-3 pb-2">
+    <div class="d-flex justify-content-between align-items-center w-100 mb-3">
+      <img src="{{ url_for('static', filename='images/drdo_logo.png') }}"
+           height="30" alt="DRDO" style="filter:brightness(0) invert(1);"/>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <div class="avatar" style="width:36px;height:36px;font-size:.85rem;">
+        {{ session.user_name[0].upper() }}
+      </div>
+      <div>
+        <div style="color:#fff;font-weight:600;font-size:.88rem;">{{ session.user_name }}</div>
+        <span class="badge badge-role text-uppercase" style="font-size:.6rem;">{{ session.role }}</span>
+      </div>
+    </div>
+  </div>
+  <div class="offcanvas-body p-0">
+    {% if session.role == 'candidate' %}
+    <div class="sidebar-section">Navigation</div>
+    <ul class="nav flex-column">
+      <li><a class="nav-link {% if request.endpoint=='candidate_dashboard' %}active{% endif %}"
+             href="{{ url_for('candidate_dashboard') }}">
+        <i class="bi bi-grid-1x2"></i> Dashboard</a></li>
+      <li><a class="nav-link {% if request.endpoint=='candidate_apply' %}active{% endif %}"
+             href="{{ url_for('candidate_apply') }}">
+        <i class="bi bi-send-check"></i> Browse & Apply</a></li>
+      <li><a class="nav-link {% if request.endpoint=='candidate_profile' %}active{% endif %}"
+             href="{{ url_for('candidate_profile') }}">
+        <i class="bi bi-person-vcard"></i> My Profile</a></li>
+    </ul>
+    {% elif session.role == 'hr' %}
+    <div class="sidebar-section">HR Panel</div>
+    <ul class="nav flex-column">
+      <li><a class="nav-link {% if request.endpoint=='hr_dashboard' %}active{% endif %}"
+             href="{{ url_for('hr_dashboard') }}">
+        <i class="bi bi-bar-chart-line"></i> Dashboard</a></li>
+      <li><a class="nav-link {% if request.endpoint=='hr_positions' %}active{% endif %}"
+             href="{{ url_for('hr_positions') }}">
+        <i class="bi bi-briefcase"></i> Manage Positions</a></li>
+    </ul>
+    {% elif session.role == 'admin' %}
+    <div class="sidebar-section">Admin Panel</div>
+    <ul class="nav flex-column">
+      <li><a class="nav-link {% if request.endpoint=='admin_dashboard' %}active{% endif %}"
+             href="{{ url_for('admin_dashboard') }}">
+        <i class="bi bi-speedometer2"></i> Dashboard</a></li>
+    </ul>
+    {% endif %}
+    <div class="sidebar-footer">
+      <a class="nav-link text-danger d-flex align-items-center gap-2"
+         href="{{ url_for('logout') }}" style="font-size:.82rem;">
+        <i class="bi bi-box-arrow-right"></i> Logout
+      </a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 <!-- ── LAYOUT ── -->
 <div class="container-fluid p-0">
-  <div class="row g-0">
+  <div class="row g-0 flex-nowrap">
 
     {% if session.user_id %}
-    <!-- SIDEBAR -->
+    <!-- SIDEBAR desktop -->
     <div class="col-md-2 d-none d-md-block sidebar">
-
       {% if session.role == 'candidate' %}
       <div class="sidebar-section">Navigation</div>
       <ul class="nav flex-column">
@@ -84,7 +141,6 @@
                href="{{ url_for('candidate_profile') }}">
           <i class="bi bi-person-vcard"></i> My Profile</a></li>
       </ul>
-
       {% elif session.role == 'hr' %}
       <div class="sidebar-section">HR Panel</div>
       <ul class="nav flex-column">
@@ -95,7 +151,6 @@
                href="{{ url_for('hr_positions') }}">
           <i class="bi bi-briefcase"></i> Manage Positions</a></li>
       </ul>
-
       {% elif session.role == 'admin' %}
       <div class="sidebar-section">Admin Panel</div>
       <ul class="nav flex-column">
@@ -104,20 +159,17 @@
           <i class="bi bi-speedometer2"></i> Dashboard</a></li>
       </ul>
       {% endif %}
-
       <div class="sidebar-footer">
         <a class="nav-link text-danger d-flex align-items-center gap-2"
            href="{{ url_for('logout') }}" style="font-size:.82rem;">
           <i class="bi bi-power"></i> Sign Out
         </a>
       </div>
-
-    </div><!-- /sidebar -->
+    </div>
     {% endif %}
 
     <!-- MAIN -->
     <main class="{% if session.user_id %}col-md-10{% else %}col-12{% endif %} main-content">
-
       {% if not session.user_id %}<div class="container py-3">{% endif %}
 
       {% with msgs = get_flashed_messages(with_categories=true) %}
@@ -133,7 +185,6 @@
       {% block content %}{% endblock %}
 
       {% if not session.user_id %}</div>{% endif %}
-
     </main>
   </div>
 </div>

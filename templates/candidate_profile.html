@@ -1,131 +1,216 @@
 {% extends "base.html" %}
 {% block title_suffix %} | My Profile{% endblock %}
 {% block content %}
-<div class="page-header fade-in">
-  <h4><i class="bi bi-person-vcard me-2"></i>My Profile</h4>
-  <p>Keep your academic details updated — HR reviews this alongside your application.</p>
+
+<div class="page-header fade-in mb-4">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h4 class="mb-1"><i class="bi bi-person-vcard me-2"></i>My Profile</h4>
+      <p class="mb-0">Keep your details updated — HR reviews this alongside your application.</p>
+    </div>
+    <a href="{{ url_for('candidate_dashboard') }}" class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);">
+      <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
+    </a>
+  </div>
 </div>
 
-<div class="card fade-in">
-  <div class="card-header"><i class="bi bi-pencil-square me-2 text-muted"></i>Academic & Personal Details</div>
-  <div class="card-body p-4">
-    <form method="POST" enctype="multipart/form-data">
-      <div class="row g-3">
-        <div class="col-md-4">
-          <label class="form-label">Date of Birth</label>
-          <input type="date" name="dob" class="form-control" value="{{ profile.dob or '' }}"/>
-        </div>
-        <div class="col-md-4">
-          <label class="form-label">Gender</label>
-          <select name="gender" class="form-select">
-            <option value="">Select</option>
-            {% for g in ['Male','Female','Other'] %}
-            <option {{ 'selected' if profile.gender == g }}>{{ g }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="col-md-4">
-          <label class="form-label">Phone</label>
-          <input type="text" class="form-control" value="{{ session.user_name }}" disabled/>
-        </div>
-        <div class="col-12">
-          <label class="form-label">Address</label>
-          <textarea name="address" rows="2" class="form-control" placeholder="Your current address…">{{ profile.address or '' }}</textarea>
-        </div>
+<form method="POST" enctype="multipart/form-data">
+  <div class="row g-4">
 
-        <div class="col-12"><hr class="my-1"/><p class="fw-semibold mb-0" style="font-size:.82rem;color:#6b7280;text-transform:uppercase;letter-spacing:.8px;">Academic Information</p></div>
+    <!-- LEFT COLUMN -->
+    <div class="col-lg-8">
 
-        <div class="col-md-6">
-          <label class="form-label">College / University</label>
-          <input type="text" name="college" class="form-control" value="{{ profile.college or '' }}" placeholder="e.g. IIT Delhi"/>
+      <!-- Personal Info -->
+      <div class="card fade-in mb-4">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="bi bi-person text-muted"></i>
+          <span>Personal Information</span>
         </div>
-        <div class="col-md-6">
-          <label class="form-label">Degree</label>
-          <input type="text" name="degree" class="form-control" value="{{ profile.degree or '' }}" placeholder="e.g. B.Tech"/>
-        </div>
-        <div class="col-md-4">
-          <label class="form-label">Branch / Specialization</label>
-          <input type="text" name="branch" class="form-control" value="{{ profile.branch or '' }}" placeholder="e.g. Computer Science"/>
-        </div>
-        <div class="col-md-4">
-          <label class="form-label">Graduation Year</label>
-          <input type="number" name="graduation_year" class="form-control" value="{{ profile.graduation_year or '' }}" min="2020" max="2030"/>
-        </div>
-        <div class="col-md-4">
-          <label class="form-label">CGPA <span class="text-muted fw-normal">(out of 10)</span></label>
-          <input type="number" name="cgpa" class="form-control" step="0.01" min="0" max="10" value="{{ profile.cgpa or '' }}" placeholder="e.g. 8.5"/>
-        </div>
-        <div class="col-12">
-          <label class="form-label">Skills</label>
-          <textarea name="skills" rows="3" class="form-control" placeholder="Python, Machine Learning, C++, MATLAB, CAD, etc.">{{ profile.skills or '' }}</textarea>
-        </div>
-
-        <div class="col-12"><hr class="my-1"/><p class="fw-semibold mb-0" style="font-size:.82rem;color:#6b7280;text-transform:uppercase;letter-spacing:.8px;">Resume</p></div>
-
-        <div class="col-12">
-          <label class="form-label">Upload Resume (PDF)</label>
-          <input type="file" name="resume" accept=".pdf" class="form-control"/>
-          {% if profile.resume_url %}
-          <div class="form-text">
-            <i class="bi bi-file-earmark-pdf me-1"></i>
-            Current file: <a href="{{ url_for('static', filename=profile.resume_url) }}" target="_blank">{{ profile.resume_url.split('/')[-1] }}</a>
-            — uploading a new one will replace it and re-run the match.
+        <div class="card-body p-4">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Date of Birth</label>
+              <input type="date" name="dob" class="form-control" value="{{ profile.dob or '' }}"/>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Gender</label>
+              <select name="gender" class="form-select">
+                <option value="">Select</option>
+                {% for g in ['Male','Female','Other'] %}
+                <option {{ 'selected' if profile.gender == g }}>{{ g }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Phone</label>
+              <input type="text" class="form-control" value="{{ session.user_phone or profile.phone or '' }}" disabled/>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Address</label>
+              <textarea name="address" rows="2" class="form-control" placeholder="Your current address…">{{ profile.address or '' }}</textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">LinkedIn URL <span class="text-muted fw-normal">(optional)</span></label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-linkedin"></i></span>
+                <input type="url" name="linkedin_url" class="form-control" value="{{ profile.linkedin_url or '' }}" placeholder="https://linkedin.com/in/..."/>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">GitHub URL <span class="text-muted fw-normal">(optional)</span></label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-github"></i></span>
+                <input type="url" name="github_url" class="form-control" value="{{ profile.github_url or '' }}" placeholder="https://github.com/..."/>
+              </div>
+            </div>
           </div>
+        </div>
+      </div>
+
+      <!-- Academic Info -->
+      <div class="card fade-in mb-4">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="bi bi-mortarboard text-muted"></i>
+          <span>Academic Information</span>
+        </div>
+        <div class="card-body p-4">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">College / University</label>
+              <input type="text" name="college" class="form-control" value="{{ profile.college or '' }}" placeholder="e.g. IIT Delhi"/>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Degree</label>
+              <input type="text" name="degree" class="form-control" value="{{ profile.degree or '' }}" placeholder="e.g. B.Tech"/>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Branch / Specialization</label>
+              <input type="text" name="branch" class="form-control" value="{{ profile.branch or '' }}" placeholder="e.g. Computer Science"/>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Graduation Year</label>
+              <input type="number" name="graduation_year" class="form-control" value="{{ profile.graduation_year or '' }}" min="2020" max="2030"/>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">CGPA <span class="text-muted fw-normal">(out of 10)</span></label>
+              <input type="number" name="cgpa" class="form-control" step="0.01" min="0" max="10" value="{{ profile.cgpa or '' }}" placeholder="e.g. 8.5"/>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Skills</label>
+              <textarea name="skills" rows="3" class="form-control" placeholder="Python, Machine Learning, C++, MATLAB, CAD, etc.">{{ profile.skills or '' }}</textarea>
+              <div class="form-text">Separate skills with commas. Be specific — e.g. "TensorFlow" not just "AI".</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resume Upload -->
+      <div class="card fade-in mb-4">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="bi bi-file-earmark-pdf text-muted"></i>
+          <span>Resume</span>
+        </div>
+        <div class="card-body p-4">
+          {% if profile.resume_url %}
+          <div class="d-flex align-items-center gap-3 p-3 mb-3" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;">
+            <i class="bi bi-file-earmark-check-fill text-success" style="font-size:1.5rem;"></i>
+            <div>
+              <div class="fw-semibold" style="font-size:.875rem;color:#065f46;">Resume Uploaded</div>
+              <a href="{{ url_for('static', filename=profile.resume_url) }}" target="_blank" class="small text-success">
+                {{ profile.resume_url.split('/')[-1] }}
+              </a>
+            </div>
+          </div>
+          <label class="form-label">Upload New Resume <span class="text-muted fw-normal">(replaces current)</span></label>
           {% else %}
-          <div class="form-text">Upload your resume to see which internship track best matches your profile.</div>
+          <div class="d-flex align-items-center gap-3 p-3 mb-3" style="background:#fff9f5;border:1px solid #fed7aa;border-radius:10px;">
+            <i class="bi bi-file-earmark-x text-warning" style="font-size:1.5rem;"></i>
+            <div>
+              <div class="fw-semibold" style="font-size:.875rem;color:#92400e;">No Resume Uploaded</div>
+              <div class="small text-muted">Upload your resume to get AI match scores for positions.</div>
+            </div>
+          </div>
+          <label class="form-label">Upload Resume (PDF only)</label>
+          {% endif %}
+          <input type="file" name="resume" accept=".pdf" class="form-control"/>
+          <div class="form-text">Max 5MB. PDF only. Uploading will re-run the AI match analysis.</div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-end gap-2">
+        <a href="{{ url_for('candidate_dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
+        <button class="btn btn-navy px-4"><i class="bi bi-save me-2"></i>Save Profile</button>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="col-lg-4">
+
+      <!-- Profile Summary Card -->
+      <div class="card fade-in mb-4 text-center">
+        <div class="card-body p-4">
+          <div class="avatar mx-auto mb-3" style="width:64px;height:64px;font-size:1.5rem;">
+            {{ session.user_name[0].upper() }}
+          </div>
+          <h6 class="fw-bold mb-0">{{ session.user_name }}</h6>
+          <div class="text-muted small mb-3">{{ profile.degree or 'Student' }}{% if profile.branch %} · {{ profile.branch }}{% endif %}</div>
+          {% if profile.college %}
+          <div class="small mb-1"><i class="bi bi-building me-1 text-muted"></i>{{ profile.college }}</div>
+          {% endif %}
+          {% if profile.cgpa %}
+          <div class="small mb-1"><i class="bi bi-star me-1 text-muted"></i>CGPA: {{ profile.cgpa }}</div>
+          {% endif %}
+          {% if profile.linkedin_url %}
+          <a href="{{ profile.linkedin_url }}" target="_blank" class="btn btn-sm btn-outline-secondary mt-2 me-1"><i class="bi bi-linkedin"></i></a>
+          {% endif %}
+          {% if profile.github_url %}
+          <a href="{{ profile.github_url }}" target="_blank" class="btn btn-sm btn-outline-secondary mt-2"><i class="bi bi-github"></i></a>
           {% endif %}
         </div>
       </div>
 
-      <div class="mt-4 d-flex justify-content-end gap-2">
-        <a href="{{ url_for('candidate_dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
-        <button class="btn btn-navy px-4"><i class="bi bi-save me-2"></i>Save Profile</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-{% if resume_match %}
-<div class="card fade-in mt-4">
-  <div class="card-header"><i class="bi bi-magic me-2 text-muted"></i>Resume Match Results</div>
-  <div class="card-body p-4">
-    <div class="d-flex align-items-center gap-3 mb-3 p-3" style="background:#f0f4f8;border-radius:10px;">
-      <div style="width:52px;height:52px;background:linear-gradient(135deg,#003366,#004080);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-        <i class="bi bi-trophy text-white" style="font-size:1.3rem;"></i>
-      </div>
-      <div>
-        <div style="font-size:.75rem;color:#6b7280;text-transform:uppercase;letter-spacing:.6px;">Best-Fit Track</div>
-        <div class="fw-bold" style="font-size:1.05rem;color:#003366;">
-          {{ resume_match.best_role }} <span class="text-muted fw-normal">({{ "%.1f"|format(resume_match.best_pct) }}% match)</span>
+      <!-- AI Match Results -->
+      {% if resume_match %}
+      <div class="card fade-in">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="bi bi-cpu text-muted"></i>
+          <span>AI Resume Match</span>
+        </div>
+        <div class="card-body p-3">
+          <div class="d-flex align-items-center gap-2 p-2 mb-3" style="background:#f0f4f8;border-radius:10px;">
+            <i class="bi bi-trophy-fill text-warning"></i>
+            <div>
+              <div style="font-size:.7rem;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;">Best Match</div>
+              <div class="fw-bold small" style="color:#003366;">{{ resume_match.best_role }}</div>
+            </div>
+            <span class="badge ms-auto" style="background:#003366;">{{ "%.1f"|format(resume_match.best_pct) }}%</span>
+          </div>
+          {% for r in resume_match.breakdown %}
+          <div class="mb-2">
+            <div class="d-flex justify-content-between mb-1">
+              <span style="font-size:.78rem;font-weight:500;">{{ r.role }}</span>
+              <span style="font-size:.78rem;color:#6b7280;">{{ "%.1f"|format(r.ml_match_pct) }}%</span>
+            </div>
+            <div style="height:6px;background:#e5eaf2;border-radius:999px;">
+              <div style="height:6px;border-radius:999px;background:{% if r.role == resume_match.best_role %}linear-gradient(90deg,#003366,#FF6600){% else %}#003366{% endif %};width:{{ r.ml_match_pct }}%;transition:width .4s;"></div>
+            </div>
+          </div>
+          {% endfor %}
+          <p class="text-muted mt-3 mb-0" style="font-size:.72rem;">ML Match % sums to 100% across all tracks. Re-upload resume to refresh.</p>
         </div>
       </div>
-    </div>
+      {% else %}
+      <div class="card fade-in">
+        <div class="card-body p-3 text-center">
+          <i class="bi bi-cpu text-muted" style="font-size:2rem;"></i>
+          <div class="fw-semibold mt-2 mb-1" style="font-size:.875rem;">No AI Match Yet</div>
+          <p class="text-muted mb-0" style="font-size:.78rem;">Upload your resume to see which DRDO internship track best fits your profile.</p>
+        </div>
+      </div>
+      {% endif %}
 
-    <div class="table-responsive">
-      <table class="table table-sm table-hover mb-0">
-        <thead>
-          <tr>
-            <th>Job Role</th>
-            <th class="text-end">ML Match %</th>
-            <th class="text-end">Similarity %</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for r in resume_match.breakdown %}
-          <tr class="{{ 'table-primary' if r.role == resume_match.best_role }}">
-            <td>{{ r.role }}</td>
-            <td class="text-end">{{ "%.1f"|format(r.ml_match_pct) }}%</td>
-            <td class="text-end">{{ "%.1f"|format(r.similarity_pct) }}%</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
     </div>
-    <p class="text-muted mt-3 mb-0" style="font-size:.78rem;">
-      ML Match % is the model's predicted probability your resume fits each track (sums to 100%). Similarity % is an independent
-      cosine-similarity score against that track's job postings, useful for sanity-checking the verdict.
-    </p>
   </div>
-</div>
-{% endif %}
+</form>
 {% endblock %}

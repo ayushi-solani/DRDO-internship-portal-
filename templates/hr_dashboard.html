@@ -1,11 +1,12 @@
 {% extends "base.html" %}
 {% block title_suffix %} | HR Dashboard{% endblock %}
 {% block content %}
-<div class="page-header fade-in">
-  <div class="d-flex justify-content-between align-items-center">
+
+<div class="page-header fade-in mb-4">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
     <div>
-      <h4><i class="bi bi-bar-chart-line me-2"></i>HR Dashboard</h4>
-      <p>Review, shortlist and manage internship applications.</p>
+      <h4 class="mb-1"><i class="bi bi-bar-chart-line me-2"></i>HR Dashboard</h4>
+      <p class="mb-0">Welcome back, {{ session.user_name }}. Review and manage internship applications.</p>
     </div>
     <a href="{{ url_for('hr_positions') }}" class="btn btn-orange">
       <i class="bi bi-briefcase me-1"></i>Manage Positions
@@ -48,11 +49,9 @@
   </div>
 </div>
 
-<!-- Filter bar -->
-<div class="filter-bar fade-in">
+<div class="filter-bar fade-in mb-3">
   <i class="bi bi-funnel text-muted"></i>
-  <input class="form-control form-control-sm" style="max-width:240px;" id="searchInput"
-         placeholder="Search candidate, position…"/>
+  <input class="form-control form-control-sm" style="max-width:240px;" id="searchInput" placeholder="Search candidate, position…"/>
   <select class="form-select form-select-sm" style="max-width:180px;" id="statusFilter">
     <option value="">All Statuses</option>
     <option>Submitted</option><option>Under Review</option><option>Shortlisted</option>
@@ -69,8 +68,8 @@
             <th class="ps-4">#</th>
             <th>Candidate</th>
             <th>Position</th>
-            <th>Department</th>
-            <th>Applied On</th>
+            <th class="d-none d-md-table-cell">Department</th>
+            <th class="d-none d-md-table-cell">Applied On</th>
             <th>Status</th>
             <th>Action</th>
           </tr>
@@ -89,12 +88,11 @@
               </div>
             </td>
             <td class="fw-semibold" style="font-size:.875rem;">{{ app.position_title }}</td>
-            <td style="font-size:.8rem;color:#6b7280;">{{ app.department }}</td>
-            <td style="font-size:.8rem;color:#6b7280;">{{ app.applied_at | datefmt }}</td>
+            <td class="d-none d-md-table-cell" style="font-size:.8rem;color:#6b7280;">{{ app.department or '—' }}</td>
+            <td class="d-none d-md-table-cell" style="font-size:.8rem;color:#6b7280;">{{ app.applied_at | datefmt }}</td>
             <td><span class="badge bg-{{ app.status | status_color }}">{{ app.status }}</span></td>
             <td>
-              <a href="{{ url_for('hr_application_detail', app_id=app.id) }}"
-                 class="btn btn-sm btn-navy">
+              <a href="{{ url_for('hr_application_detail', app_id=app.id) }}" class="btn btn-sm btn-navy">
                 <i class="bi bi-pencil-square me-1"></i>Review
               </a>
             </td>

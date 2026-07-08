@@ -1,9 +1,17 @@
 {% extends "base.html" %}
-{% block title_suffix %} | Apply{% endblock %}
+{% block title_suffix %} | Browse & Apply{% endblock %}
 {% block content %}
-<div class="page-header fade-in">
-  <h4><i class="bi bi-send-check me-2"></i>Browse & Apply</h4>
-  <p>Open internship positions at DRDO — updated regularly.</p>
+
+<div class="page-header fade-in mb-4">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h4 class="mb-1"><i class="bi bi-send-check me-2"></i>Browse & Apply</h4>
+      <p class="mb-0">Open internship positions at DRDO — updated regularly.</p>
+    </div>
+    <a href="{{ url_for('candidate_dashboard') }}" class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);">
+      <i class="bi bi-arrow-left me-1"></i>Dashboard
+    </a>
+  </div>
 </div>
 
 {% if positions %}
@@ -14,7 +22,7 @@
       <div style="height:5px;background:linear-gradient(90deg,#003366,#FF6600);border-radius:var(--radius-lg) var(--radius-lg) 0 0;"></div>
       <div class="p-4 d-flex flex-column flex-grow-1">
         <div class="d-flex justify-content-between align-items-start mb-3">
-          <span class="dept-tag">{{ pos.department }}</span>
+          <span class="dept-tag">{{ pos.department or 'General' }}</span>
           {% if pos.deadline %}
           <span class="badge" style="background:#fef3c7;color:#92400e;border-radius:999px;font-size:.68rem;">
             <i class="bi bi-calendar3"></i> {{ pos.deadline | datefmt }}
@@ -46,7 +54,7 @@
         <button class="btn btn-navy w-100 mt-auto"
                 data-bs-toggle="modal" data-bs-target="#applyModal"
                 data-id="{{ pos.id }}" data-title="{{ pos.title }}"
-                data-dept="{{ pos.department }}" data-req="{{ pos.requirements or 'See position description.' }}">
+                data-dept="{{ pos.department or 'General' }}" data-req="{{ pos.requirements or 'See position description.' }}">
           <i class="bi bi-send me-2"></i>Apply Now
         </button>
       </div>
@@ -76,7 +84,7 @@
           </div>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body p-4">
           <input type="hidden" name="position_id" id="modalPosId"/>
           <div class="alert alert-info mb-4" id="modalReq" style="font-size:.82rem;"></div>
           <div class="mb-3">

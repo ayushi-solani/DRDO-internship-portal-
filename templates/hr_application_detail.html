@@ -8,25 +8,24 @@
   </a>
 </div>
 
-<div class="page-header fade-in">
-  <div class="d-flex justify-content-between align-items-start">
+<div class="page-header fade-in mb-4">
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
     <div class="d-flex align-items-center gap-3">
       <div class="avatar" style="width:48px;height:48px;font-size:1.2rem;">
         {{ application.candidate_name[0].upper() }}
       </div>
       <div>
         <h4 class="mb-0">{{ application.candidate_name }}</h4>
-        <p class="mb-0">Applying for: <strong>{{ application.title }}</strong> &bull; {{ application.department }}</p>
+        <p class="mb-0">Applying for: <strong>{{ application.title }}</strong> &bull; {{ application.department or '—' }}</p>
       </div>
     </div>
-    <span class="badge bg-{{ application.status | status_color }} fs-6 px-3 py-2 mt-1">
+    <span class="badge bg-{{ application.status | status_color }}" style="font-size:.875rem;padding:.5em 1.2em;border-radius:999px;">
       {{ application.status }}
     </span>
   </div>
 </div>
 
 <div class="row g-4">
-  <!-- LEFT -->
   <div class="col-md-7">
     <!-- Candidate Info -->
     <div class="card fade-in mb-4">
@@ -55,8 +54,15 @@
           </div>
           <div class="col-4">
             <div style="font-size:.75rem;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;">CGPA</div>
-            <div class="fw-bold" style="font-size:1rem;color:#003366;">{{ application.cgpa or '—' }}</div>
+            <div class="fw-bold" style="font-size:1.1rem;color:#003366;">{{ application.cgpa or '—' }}</div>
           </div>
+          {% if application.resume_best_role %}
+          <div class="col-4">
+            <div style="font-size:.75rem;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;">AI Match</div>
+            <div class="fw-bold" style="font-size:.875rem;color:#FF6600;">{{ "%.1f"|format(application.resume_best_pct) }}%</div>
+            <div style="font-size:.72rem;color:#6b7280;">{{ application.resume_best_role }}</div>
+          </div>
+          {% endif %}
           <div class="col-12">
             <div style="font-size:.75rem;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;">Skills</div>
             <div style="font-size:.875rem;">
@@ -67,6 +73,13 @@
               {% else %}—{% endif %}
             </div>
           </div>
+          {% if application.resume_url %}
+          <div class="col-12">
+            <a href="{{ url_for('static', filename=application.resume_url) }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+              <i class="bi bi-file-earmark-pdf me-1"></i>Download Resume
+            </a>
+          </div>
+          {% endif %}
         </div>
       </div>
     </div>
@@ -91,7 +104,6 @@
               {% for s in statuses %}
               <option value="{{ s }}" {{ 'selected' if s == application.status }}>{{ s }}</option>
               {% endfor %}
-              <option value="Rejected" {{ 'selected' if application.status == 'Rejected' }}>Rejected</option>
             </select>
           </div>
           <div class="mb-3">
@@ -105,7 +117,6 @@
     </div>
   </div>
 
-  <!-- RIGHT -->
   <div class="col-md-5">
     <!-- Position Info -->
     <div class="card fade-in fade-in-1 mb-4">
@@ -114,15 +125,17 @@
         <table class="table table-sm table-borderless mb-0">
           <tr><td class="text-muted" style="font-size:.82rem;width:110px;">Location</td><td style="font-size:.875rem;">{{ application.location }}</td></tr>
           <tr><td class="text-muted" style="font-size:.82rem;">Duration</td><td>{{ application.duration or '—' }}</td></tr>
-          <tr><td class="text-muted" style="font-size:.82rem;">Stipend</td>
-              <td class="fw-semibold" style="color:#065f46;">
-                {% if application.stipend %}₹{{ "{:,.0f}".format(application.stipend) }}/mo{% else %}—{% endif %}
-              </td></tr>
+          <tr>
+            <td class="text-muted" style="font-size:.82rem;">Stipend</td>
+            <td class="fw-semibold" style="color:#065f46;">
+              {% if application.stipend %}&#8377;{{ "{:,.0f}".format(application.stipend) }}/mo{% else %}—{% endif %}
+            </td>
+          </tr>
         </table>
       </div>
     </div>
 
-    <!-- History -->
+    <!-- Status History -->
     <div class="card fade-in fade-in-2">
       <div class="card-header"><i class="bi bi-clock-history me-2 text-muted"></i>Status History</div>
       <div class="card-body">
