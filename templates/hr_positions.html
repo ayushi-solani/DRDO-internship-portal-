@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 {% block title_suffix %} | Manage Positions{% endblock %}
-{% block content %}
 
+{% block content %}
 <div class="page-header fade-in mb-4" style="overflow:visible;">
   <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
     <div>
       <h4 class="mb-1"><i class="bi bi-briefcase me-2"></i>Internship Positions</h4>
       <p class="mb-0">Create and manage open positions for candidates to apply.</p>
     </div>
-    <button class="btn btn-orange" data-bs-toggle="modal" data-bs-target="#addPositionModal">
+    <button class="btn btn-orange" onclick="showModal()">
       <i class="bi bi-plus-circle me-1"></i>Add Position
     </button>
   </div>
@@ -66,85 +66,85 @@
   <h5 class="fw-bold mb-2">No Positions Yet</h5>
   <p class="text-muted mb-4" style="font-size:.88rem;">Create your first internship position to start receiving applications.</p>
   <div>
-    <button class="btn btn-navy" data-bs-toggle="modal" data-bs-target="#addPositionModal">
+    <button class="btn btn-navy" onclick="showModal()">
       <i class="bi bi-plus-circle me-2"></i>Create Position
     </button>
   </div>
 </div>
 {% endif %}
 
-<!-- ADD POSITION MODAL -->
-<div class="modal fade" id="addPositionModal" tabindex="-1">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <form method="POST">
-        <div class="modal-header text-white" style="background:linear-gradient(135deg,#003366,#004080);">
-          <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle me-2"></i>New Internship Position</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+<!-- CUSTOM MODAL OVERLAY -->
+<div id="positionOverlay" onclick="hideModal()" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9998;"></div>
+<div id="positionModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;width:90%;max-width:700px;max-height:90vh;overflow-y:auto;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+  <div style="background:linear-gradient(135deg,#003366,#004080);padding:1.1rem 1.5rem;border-radius:16px 16px 0 0;display:flex;justify-content:space-between;align-items:center;">
+    <h5 style="color:#fff;margin:0;font-weight:700;"><i class="bi bi-plus-circle me-2"></i>New Internship Position</h5>
+    <button onclick="hideModal()" style="background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer;">&times;</button>
+  </div>
+  <div style="padding:1.5rem;">
+    <form method="POST">
+      <div class="row g-3">
+        <div class="col-md-8">
+          <label class="form-label">Position Title *</label>
+          <input type="text" name="title" class="form-control" required placeholder="e.g. AI/ML Research Intern"/>
         </div>
-        <div class="modal-body p-4">
-          <div class="row g-3">
-            <div class="col-md-8">
-              <label class="form-label">Position Title *</label>
-              <input type="text" name="title" class="form-control" required placeholder="e.g. AI/ML Research Intern"/>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">Total Seats *</label>
-              <input type="number" name="total_seats" class="form-control" min="1" value="1" required/>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Department *</label>
-              <select name="department_id" class="form-select" required>
-                <option value="">Select Department</option>
-                {% for dept in departments %}
-                <option value="{{ dept.id }}">{{ dept.name }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Location</label>
-              <input type="text" name="location" class="form-control" value="DRDO HQ, New Delhi"/>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">Duration</label>
-              <input type="text" name="duration" class="form-control" placeholder="e.g. 2 Months"/>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">Stipend (&#8377;/month)</label>
-              <input type="number" name="stipend" class="form-control" step="500" placeholder="e.g. 8000"/>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">Application Deadline</label>
-              <input type="date" name="deadline" class="form-control"/>
-            </div>
-            <div class="col-12">
-              <label class="form-label">Description</label>
-              <textarea name="description" rows="3" class="form-control" placeholder="Describe the internship role…"></textarea>
-            </div>
-            <div class="col-12">
-              <label class="form-label">Requirements</label>
-              <textarea name="requirements" rows="2" class="form-control" placeholder="Required skills, qualifications…"></textarea>
-            </div>
-          </div>
+        <div class="col-md-4">
+          <label class="form-label">Total Seats *</label>
+          <input type="number" name="total_seats" class="form-control" min="1" value="1" required/>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <div class="col-md-6">
+          <label class="form-label">Department *</label>
+          <select name="department_id" class="form-select" required>
+            <option value="">Select Department</option>
+            {% for dept in departments %}
+            <option value="{{ dept.id }}">{{ dept.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Location</label>
+          <input type="text" name="location" class="form-control" value="DRDO HQ, New Delhi"/>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Duration</label>
+          <input type="text" name="duration" class="form-control" placeholder="e.g. 2 Months"/>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Stipend (&#8377;/month)</label>
+          <input type="number" name="stipend" class="form-control" step="500" placeholder="e.g. 8000"/>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Application Deadline</label>
+          <input type="date" name="deadline" class="form-control"/>
+        </div>
+        <div class="col-12">
+          <label class="form-label">Description</label>
+          <textarea name="description" rows="3" class="form-control" placeholder="Describe the internship role…"></textarea>
+        </div>
+        <div class="col-12">
+          <label class="form-label">Requirements</label>
+          <textarea name="requirements" rows="2" class="form-control" placeholder="Required skills, qualifications…"></textarea>
+        </div>
+        <div class="col-12 d-flex justify-content-end gap-2 pt-2">
+          <button type="button" onclick="hideModal()" class="btn btn-outline-secondary">Cancel</button>
           <button type="submit" class="btn btn-navy px-4"><i class="bi bi-save me-2"></i>Create Position</button>
         </div>
-      </form>
-    </div>
+      </div>
+    </form>
   </div>
 </div>
-
-
+{% endblock %}
 
 {% block extra_js %}
 <script>
-document.getElementById('addPositionModal').addEventListener('hidden.bs.modal', function() {
-  document.body.classList.remove('modal-open');
-  document.body.style.removeProperty('overflow');
-  document.body.style.removeProperty('padding-right');
-  document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
-});
+function showModal() {
+  document.getElementById('positionOverlay').style.display = 'block';
+  document.getElementById('positionModal').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+function hideModal() {
+  document.getElementById('positionOverlay').style.display = 'none';
+  document.getElementById('positionModal').style.display = 'none';
+  document.body.style.overflow = '';
+}
 </script>
 {% endblock %}

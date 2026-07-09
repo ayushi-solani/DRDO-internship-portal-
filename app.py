@@ -606,5 +606,68 @@ def datefmt(value, fmt="%d %b %Y"):
     return value.strftime(fmt)
 
 
+@app.route("/admin/departments")
+@login_required
+@role_required("admin")
+def admin_departments():
+    departments = query("SELECT * FROM departments ORDER BY name")
+    labs = query("SELECT * FROM labs ORDER BY name")
+    return render_template("admin_departments.html",
+                           departments=departments, labs=labs)
+
+@app.route("/admin/departments/add", methods=["POST"])
+@login_required
+@role_required("admin")
+def admin_add_department():
+    name = request.form["name"].strip()
+    code = request.form["code"].strip().upper()
+    description = request.form.get("description", "").strip()
+    existing = query("SELECT id FROM departments WHERE code=%s", (code,), one=True)
+    if existing:
+        flash("Department code already exists.", "danger")
+        return redirect(url_for("admin_departments"))
+    query("INSERT INTO departments (name, code, description) VALUES (%s,%s,%s)",
+          (name, code, description), commit=True)
+    flash(f"Department '{name}' created.", "success")
+    return redirect(url_for("admin_departments"))
+
+@app.route("/admin/departments/<int:dept_id>/toggle")
+@login_required
+@role_required("admin")
+def admin_toggle_department(dept_id):
+    dept = query("SELECT is_active FROM departments WHERE id=%s", (dept_id,), one=True)
+    if dept:
+        query("UPDATE departments SET is_active=%s WHERE id=%s",
+              (0 if dept["is_active"] else 1, dept_id), commit=True)
+        flash("Department updated.", "success")
+    return redirect(url_for("admin_departments"))
+
+@app.route("/admin/labs/add", methods=["POST"])
+@login_required
+@role_required("admin")
+def admin_add_lab():
+    name = request.form["name"].strip()
+    code = request.form["code"].strip().upper()
+    dept_id = request.form["department_id"]
+    location = request.form.get("location", "").strip()
+    existing = query("SELECT id FROM labs WHERE code=%s", (code,), one=True)
+    if existing:
+        flash("Lab code already exists.", "danger")
+        return redirect(url_for("admin_departments"))
+    query("INSERT INTO labs (department_id, name, code, location) VALUES (%s,%s,%s,%s)",
+          (dept_id, name, code, location), commit=True)
+    flash(f"Lab '{name}' added.", "success")
+    return redirect(url_for("admin_departments"))
+
+@app.route("/admin/labs/<int:lab_id>/toggle")
+@login_required
+@role_required("admin")
+def admin_toggle_lab(lab_id):
+    lab = query("SELECT is_active FROM labs WHERE id=%s", (lab_id,), one=True)
+    if lab:
+        query("UPDATE labs SET is_active=%s WHERE id=%s",
+              (0 if lab["is_active"] else 1, lab_id), commit=True)
+        flash("Lab updated.", "success")
+    return redirect(url_for("admin_departments"))
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

@@ -109,6 +109,9 @@
       <li><a class="nav-link {% if request.endpoint=='admin_dashboard' %}active{% endif %}"
              href="{{ url_for('admin_dashboard') }}">
         <i class="bi bi-speedometer2"></i> Dashboard</a></li>
+      <li><a class="nav-link {% if request.endpoint=='admin_departments' %}active{% endif %}"
+             href="{{ url_for('admin_departments') }}">
+        <i class="bi bi-building"></i> Departments</a></li>
     </ul>
     {% endif %}
     <div class="sidebar-footer">
@@ -190,6 +193,20 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+// Fix: prevent offcanvas from conflicting with modals
+document.addEventListener('DOMContentLoaded', function() {
+  var offcanvas = document.getElementById('mobileSidebar');
+  if (offcanvas) {
+    offcanvas.addEventListener('show.bs.offcanvas', function() {
+      document.querySelectorAll('.modal.show').forEach(function(m) {
+        bootstrap.Modal.getInstance(m)?.hide();
+      });
+    });
+  }
+});
+</script>
 {% block extra_js %}{% endblock %}
 </body>
 </html>

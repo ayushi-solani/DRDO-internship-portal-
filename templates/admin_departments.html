@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block title_suffix %} | Department Management{% endblock %}
+
+{% block content %}
+<div class="page-header fade-in mb-4" style="overflow:visible;">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h4 class="mb-1"><i class="bi bi-building me-2"></i>Department Management</h4>
+      <p class="mb-0">Create and manage DRDO departments and labs.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('admin_dashboard') }}" class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);">
+        <i class="bi bi-arrow-left me-1"></i>Dashboard
+      </a>
+      <button class="btn btn-orange" onclick="openDeptModal()">
+        <i class="bi bi-plus-circle me-1"></i>Add Department
+      </button>
+    </div>
+  </div>
+</div>
+
+{% for dept in departments %}
+<div class="card fade-in mb-3">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <div class="d-flex align-items-center gap-3">
+      <div style="width:38px;height:38px;background:linear-gradient(135deg,#003366,#004080);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+        <i class="bi bi-building text-white"></i>
+      </div>
+      <div>
+        <div class="fw-bold">{{ dept.name }}</div>
+        <div style="font-size:.75rem;color:#6b7280;">Code: {{ dept.code }}</div>
+      </div>
+    </div>
+    <div class="d-flex gap-2 align-items-center">
+      <span class="badge" style="border-radius:999px;background:{{ '#d1fae5' if dept.is_active else '#fee2e2' }};color:{{ '#065f46' if dept.is_active else '#991b1b' }};">
+        {{ 'Active' if dept.is_active else 'Inactive' }}
+      </span>
+      <button class="btn btn-sm btn-orange" onclick="openLabModal({{ dept.id }}, '{{ dept.name|replace("'", "\\'") }}')">
+        <i class="bi bi-plus me-1"></i>Add Lab
+      </button>
+      <a href="{{ url_for('admin_toggle_department', dept_id=dept.id) }}"
+         class="btn btn-sm {{ 'btn-outline-danger' if dept.is_active else 'btn-outline-success' }}"
+         onclick="return confirm('Are you sure?')">
+        {{ 'Deactivate' if dept.is_active else 'Activate' }}
+      </a>
+    </div>
+  </div>
+  {% if dept.description %}
+  <div class="px-4 py-2" style="font-size:.82rem;color:#6b7280;border-bottom:1px solid #f1f5f9;">{{ dept.description }}</div>
+  {% endif %}
+  <div class="card-body p-0">
+    {% set dept_labs = labs | selectattr('department_id', 'eq', dept.id) | list %}
+    {% if dept_labs %}
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th class="ps-4">Lab Name</th>
+          <th>Code</th>
+          <th>Location</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for lab in dept_labs %}
+        <tr>
+          <td class="ps-4 fw-semibold" style="font-size:.875rem;">{{ lab.name }}</td>
+          <td style="font-size:.8rem;color:#6b7280;">{{ lab.code }}</td>
+          <td style="font-size:.8rem;color:#6b7280;">{{ lab.location or '—' }}</td>
+          <td>
+            <span class="badge" style="border-radius:999px;background:{{ '#d1fae5' if lab.is_active else '#fee2e2' }};color:{{ '#065f46' if lab.is_active else '#991b1b' }};">
+              {{ 'Active' if lab.is_active else 'Inactive' }}
+            </span>
+          </td>
+          <td>
+            <a href="{{ url_for('admin_toggle_lab', lab_id=lab.id) }}"
+               class="btn btn-sm {{ 'btn-outline-danger' if lab.is_active else 'btn-outline-success' }}"
+               onclick="return confirm('Are you sure?')">
+              {{ 'Deactivate' if lab.is_active else 'Activate' }}
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="p-3 text-center text-muted" style="font-size:.82rem;">
+      No labs yet.
+      <button class="btn btn-sm btn-link p-0" onclick="openLabModal({{ dept.id }}, '{{ dept.name|replace("'", "\\'") }}')">Add one</button>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% else %}
+<div class="card text-center fade-in" style="padding:4rem 2rem;">
+  <div style="width:80px;height:80px;background:#f0f4f8;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;">
+    <i class="bi bi-building" style="font-size:2rem;color:#003366;"></i>
+  </div>
+  <h5 class="fw-bold mb-2">No Departments Yet</h5>
+  <p class="text-muted mb-4" style="font-size:.88rem;">Add your first department to get started.</p>
+  <button class="btn btn-navy" onclick="openDeptModal()">
+    <i class="bi bi-plus-circle me-2"></i>Add Department
+  </button>
+</div>
+{% endfor %}
+
+<!-- DEPT OVERLAY -->
+<div id="deptBg" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9998;" onclick="closeDeptModal()"></div>
+<div id="deptBox" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;width:90%;max-width:520px;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+  <div style="background:linear-gradient(135deg,#003366,#004080);padding:1.1rem 1.5rem;border-radius:16px 16px 0 0;display:flex;justify-content:space-between;align-items:center;">
+    <h5 style="color:#fff;margin:0;font-weight:700;"><i class="bi bi-building me-2"></i>New Department</h5>
+    <button onclick="closeDeptModal()" style="background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer;">&times;</button>
+  </div>
+  <div style="padding:1.5rem;">
+    <form method="POST" action="{{ url_for('admin_add_department') }}">
+      <div class="row g-3">
+        <div class="col-md-8">
+          <label class="form-label">Department Name *</label>
+          <input type="text" name="name" class="form-control" required placeholder="e.g. Electronics & Radar"/>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Code *</label>
+          <input type="text" name="code" class="form-control" required placeholder="e.g. ELEC"/>
+        </div>
+        <div class="col-12">
+          <label class="form-label">Description</label>
+          <textarea name="description" rows="2" class="form-control" placeholder="Brief description…"></textarea>
+        </div>
+        <div class="col-12 d-flex justify-content-end gap-2">
+          <button type="button" onclick="closeDeptModal()" class="btn btn-outline-secondary">Cancel</button>
+          <button type="submit" class="btn btn-navy px-4"><i class="bi bi-save me-2"></i>Create</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- LAB OVERLAY -->
+<div id="labBg" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9998;" onclick="closeLabModal()"></div>
+<div id="labBox" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;width:90%;max-width:520px;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+  <div style="background:linear-gradient(135deg,#FF6600,#FF8533);padding:1.1rem 1.5rem;border-radius:16px 16px 0 0;display:flex;justify-content:space-between;align-items:center;">
+    <div>
+      <h5 style="color:#fff;margin:0;font-weight:700;"><i class="bi bi-flask me-2"></i>Add Lab</h5>
+      <small style="color:rgba(255,255,255,.8);" id="labDeptName"></small>
+    </div>
+    <button onclick="closeLabModal()" style="background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer;">&times;</button>
+  </div>
+  <div style="padding:1.5rem;">
+    <form method="POST" action="{{ url_for('admin_add_lab') }}">
+      <input type="hidden" name="department_id" id="labDeptId"/>
+      <div class="row g-3">
+        <div class="col-md-8">
+          <label class="form-label">Lab Name *</label>
+          <input type="text" name="name" class="form-control" required placeholder="e.g. Radar Signal Processing Lab"/>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Code *</label>
+          <input type="text" name="code" class="form-control" required placeholder="e.g. ELEC-RSP"/>
+        </div>
+        <div class="col-12">
+          <label class="form-label">Location</label>
+          <input type="text" name="location" class="form-control" placeholder="e.g. DRDO, Bangalore"/>
+        </div>
+        <div class="col-12 d-flex justify-content-end gap-2">
+          <button type="button" onclick="closeLabModal()" class="btn btn-outline-secondary">Cancel</button>
+          <button type="submit" class="btn btn-orange px-4"><i class="bi bi-save me-2"></i>Add Lab</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openDeptModal() {
+  document.getElementById('deptBg').style.display = 'block';
+  document.getElementById('deptBox').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+function closeDeptModal() {
+  document.getElementById('deptBg').style.display = 'none';
+  document.getElementById('deptBox').style.display = 'none';
+  document.body.style.overflow = '';
+}
+function openLabModal(deptId, deptName) {
+  document.getElementById('labDeptId').value = deptId;
+  document.getElementById('labDeptName').textContent = deptName;
+  document.getElementById('labBg').style.display = 'block';
+  document.getElementById('labBox').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+function closeLabModal() {
+  document.getElementById('labBg').style.display = 'none';
+  document.getElementById('labBox').style.display = 'none';
+  document.body.style.overflow = '';
+}
+</script>
+{% endblock %}
