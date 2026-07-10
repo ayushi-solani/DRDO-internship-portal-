@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% block title_suffix %} | My Profile{% endblock %}
-{% block content %}
 
-<div class="page-header fade-in mb-4">
+{% block content %}
+<div class="page-header fade-in mb-4" style="overflow:visible;">
   <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
     <div>
       <h4 class="mb-1"><i class="bi bi-person-vcard me-2"></i>My Profile</h4>
@@ -23,8 +23,7 @@
       <!-- Personal Info -->
       <div class="card fade-in mb-4">
         <div class="card-header d-flex align-items-center gap-2">
-          <i class="bi bi-person text-muted"></i>
-          <span>Personal Information</span>
+          <i class="bi bi-person text-muted"></i><span>Personal Information</span>
         </div>
         <div class="card-body p-4">
           <div class="row g-3">
@@ -70,8 +69,7 @@
       <!-- Academic Info -->
       <div class="card fade-in mb-4">
         <div class="card-header d-flex align-items-center gap-2">
-          <i class="bi bi-mortarboard text-muted"></i>
-          <span>Academic Information</span>
+          <i class="bi bi-mortarboard text-muted"></i><span>Academic Information</span>
         </div>
         <div class="card-body p-4">
           <div class="row g-3">
@@ -95,11 +93,27 @@
               <label class="form-label">CGPA <span class="text-muted fw-normal">(out of 10)</span></label>
               <input type="number" name="cgpa" class="form-control" step="0.01" min="0" max="10" value="{{ profile.cgpa or '' }}" placeholder="e.g. 8.5"/>
             </div>
+
+            <!-- SKILLS TAGS -->
             <div class="col-12">
               <label class="form-label">Skills</label>
-              <textarea name="skills" rows="3" class="form-control" placeholder="Python, Machine Learning, C++, MATLAB, CAD, etc.">{{ profile.skills or '' }}</textarea>
-              <div class="form-text">Separate skills with commas. Be specific — e.g. "TensorFlow" not just "AI".</div>
+              <div id="tagsContainer" style="display:flex;flex-wrap:wrap;gap:.4rem;padding:.5rem .75rem;border:1px solid #e5eaf2;border-radius:10px;min-height:46px;background:#fff;cursor:text;" onclick="document.getElementById('tagInput').focus()">
+                {% if profile.skills %}
+                  {% for skill in profile.skills.split(',') %}
+                    {% if skill.strip() %}
+                    <span class="skill-tag" style="display:inline-flex;align-items:center;gap:.3rem;background:#e0f2fe;color:#0369a1;border-radius:999px;padding:.2em .75em;font-size:.8rem;font-weight:500;">
+                      {{ skill.strip() }}
+                      <button type="button" onclick="removeTag(this)" style="background:none;border:none;color:#0369a1;cursor:pointer;padding:0;font-size:.75rem;line-height:1;">&times;</button>
+                    </span>
+                    {% endif %}
+                  {% endfor %}
+                {% endif %}
+                <input id="tagInput" type="text" placeholder="Type skill + Enter" style="border:none;outline:none;font-size:.875rem;min-width:140px;flex:1;padding:.15rem 0;background:transparent;"/>
+              </div>
+              <input type="hidden" name="skills" id="skillsHidden" value="{{ profile.skills or '' }}"/>
+              <div class="form-text">Press Enter or comma to add a skill. Click × to remove.</div>
             </div>
+
           </div>
         </div>
       </div>
@@ -107,19 +121,23 @@
       <!-- Resume Upload -->
       <div class="card fade-in mb-4">
         <div class="card-header d-flex align-items-center gap-2">
-          <i class="bi bi-file-earmark-pdf text-muted"></i>
-          <span>Resume</span>
+          <i class="bi bi-file-earmark-pdf text-muted"></i><span>Resume</span>
         </div>
         <div class="card-body p-4">
           {% if profile.resume_url %}
           <div class="d-flex align-items-center gap-3 p-3 mb-3" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;">
             <i class="bi bi-file-earmark-check-fill text-success" style="font-size:1.5rem;"></i>
-            <div>
+            <div class="flex-grow-1">
               <div class="fw-semibold" style="font-size:.875rem;color:#065f46;">Resume Uploaded</div>
               <a href="{{ url_for('static', filename=profile.resume_url) }}" target="_blank" class="small text-success">
                 {{ profile.resume_url.split('/')[-1] }}
               </a>
             </div>
+            {% if profile.resume_matched_at %}
+            <span class="badge" style="background:#d1fae5;color:#065f46;border-radius:999px;font-size:.7rem;">
+              <i class="bi bi-cpu me-1"></i>AI Scored
+            </span>
+            {% endif %}
           </div>
           <label class="form-label">Upload New Resume <span class="text-muted fw-normal">(replaces current)</span></label>
           {% else %}
@@ -147,9 +165,9 @@
     <!-- RIGHT COLUMN -->
     <div class="col-lg-4">
 
-      <!-- Profile Summary Card -->
-      <div class="card fade-in mb-4 text-center">
-        <div class="card-body p-4">
+      <!-- Profile Summary + Completion -->
+      <div class="card fade-in mb-4">
+        <div class="card-body p-4 text-center">
           <div class="avatar mx-auto mb-3" style="width:64px;height:64px;font-size:1.5rem;">
             {{ session.user_name[0].upper() }}
           </div>
@@ -159,14 +177,33 @@
           <div class="small mb-1"><i class="bi bi-building me-1 text-muted"></i>{{ profile.college }}</div>
           {% endif %}
           {% if profile.cgpa %}
-          <div class="small mb-1"><i class="bi bi-star me-1 text-muted"></i>CGPA: {{ profile.cgpa }}</div>
+          <div class="small mb-2"><i class="bi bi-star me-1 text-muted"></i>CGPA: {{ profile.cgpa }}</div>
           {% endif %}
           {% if profile.linkedin_url %}
-          <a href="{{ profile.linkedin_url }}" target="_blank" class="btn btn-sm btn-outline-secondary mt-2 me-1"><i class="bi bi-linkedin"></i></a>
+          <a href="{{ profile.linkedin_url }}" target="_blank" class="btn btn-sm btn-outline-secondary mt-1 me-1"><i class="bi bi-linkedin"></i></a>
           {% endif %}
           {% if profile.github_url %}
-          <a href="{{ profile.github_url }}" target="_blank" class="btn btn-sm btn-outline-secondary mt-2"><i class="bi bi-github"></i></a>
+          <a href="{{ profile.github_url }}" target="_blank" class="btn btn-sm btn-outline-secondary mt-1"><i class="bi bi-github"></i></a>
           {% endif %}
+
+          <!-- COMPLETION BAR -->
+          <div class="mt-4 text-start">
+            <div class="d-flex justify-content-between mb-1">
+              <span style="font-size:.78rem;font-weight:600;color:#1a2340;">Profile Completion</span>
+              <span style="font-size:.78rem;font-weight:700;color:{% if completion >= 75 %}#065f46{% elif completion >= 40 %}#92400e{% else %}#991b1b{% endif %};">{{ completion }}%</span>
+            </div>
+            <div style="height:8px;background:#e5eaf2;border-radius:999px;overflow:hidden;">
+              <div style="height:8px;border-radius:999px;width:{{ completion }}%;background:{% if completion >= 75 %}linear-gradient(90deg,#10b981,#065f46){% elif completion >= 40 %}linear-gradient(90deg,#f59e0b,#FF6600){% else %}linear-gradient(90deg,#ef4444,#991b1b){% endif %};transition:width .5s;"></div>
+            </div>
+            {% if completion < 100 %}
+            <div class="mt-2" style="font-size:.72rem;color:#6b7280;">
+              {% if not profile.resume_url %}<div><i class="bi bi-dot"></i> Upload your resume</div>{% endif %}
+              {% if not profile.skills %}<div><i class="bi bi-dot"></i> Add your skills</div>{% endif %}
+              {% if not profile.college %}<div><i class="bi bi-dot"></i> Fill academic details</div>{% endif %}
+              {% if not profile.dob %}<div><i class="bi bi-dot"></i> Add date of birth</div>{% endif %}
+            </div>
+            {% endif %}
+          </div>
         </div>
       </div>
 
@@ -174,8 +211,7 @@
       {% if resume_match %}
       <div class="card fade-in">
         <div class="card-header d-flex align-items-center gap-2">
-          <i class="bi bi-cpu text-muted"></i>
-          <span>AI Resume Match</span>
+          <i class="bi bi-cpu text-muted"></i><span>AI Resume Match</span>
         </div>
         <div class="card-body p-3">
           <div class="d-flex align-items-center gap-2 p-2 mb-3" style="background:#f0f4f8;border-radius:10px;">
@@ -193,11 +229,11 @@
               <span style="font-size:.78rem;color:#6b7280;">{{ "%.1f"|format(r.ml_match_pct) }}%</span>
             </div>
             <div style="height:6px;background:#e5eaf2;border-radius:999px;">
-              <div style="height:6px;border-radius:999px;background:{% if r.role == resume_match.best_role %}linear-gradient(90deg,#003366,#FF6600){% else %}#003366{% endif %};width:{{ r.ml_match_pct }}%;transition:width .4s;"></div>
+              <div style="height:6px;border-radius:999px;width:{{ r.ml_match_pct }}%;background:{% if r.role == resume_match.best_role %}linear-gradient(90deg,#003366,#FF6600){% else %}#003366{% endif %};transition:width .4s;"></div>
             </div>
           </div>
           {% endfor %}
-          <p class="text-muted mt-3 mb-0" style="font-size:.72rem;">ML Match % sums to 100% across all tracks. Re-upload resume to refresh.</p>
+          <p class="text-muted mt-3 mb-0" style="font-size:.72rem;">Re-upload resume to refresh scores.</p>
         </div>
       </div>
       {% else %}
@@ -213,4 +249,59 @@
     </div>
   </div>
 </form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Skills tags logic
+const container = document.getElementById('tagsContainer');
+const input     = document.getElementById('tagInput');
+const hidden    = document.getElementById('skillsHidden');
+
+function getTags() {
+  return Array.from(container.querySelectorAll('.skill-tag'))
+    .map(t => t.childNodes[0].textContent.trim())
+    .filter(Boolean);
+}
+
+function updateHidden() {
+  hidden.value = getTags().join(', ');
+}
+
+function addTag(val) {
+  val = val.trim();
+  if (!val) return;
+  const existing = getTags().map(t => t.toLowerCase());
+  if (existing.includes(val.toLowerCase())) return;
+
+  const tag = document.createElement('span');
+  tag.className = 'skill-tag';
+  tag.style.cssText = 'display:inline-flex;align-items:center;gap:.3rem;background:#e0f2fe;color:#0369a1;border-radius:999px;padding:.2em .75em;font-size:.8rem;font-weight:500;';
+  tag.innerHTML = val + '<button type="button" onclick="removeTag(this)" style="background:none;border:none;color:#0369a1;cursor:pointer;padding:0;font-size:.75rem;line-height:1;">&times;</button>';
+  container.insertBefore(tag, input);
+  input.value = '';
+  updateHidden();
+}
+
+function removeTag(btn) {
+  btn.parentElement.remove();
+  updateHidden();
+}
+
+input.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    addTag(this.value.replace(',', ''));
+  }
+  if (e.key === 'Backspace' && !this.value) {
+    const tags = container.querySelectorAll('.skill-tag');
+    if (tags.length) tags[tags.length - 1].remove();
+    updateHidden();
+  }
+});
+
+input.addEventListener('blur', function() {
+  if (this.value.trim()) addTag(this.value);
+});
+</script>
 {% endblock %}

@@ -8,7 +8,7 @@
       <h4 class="mb-1"><i class="bi bi-briefcase me-2"></i>Internship Positions</h4>
       <p class="mb-0">Create and manage open positions for candidates to apply.</p>
     </div>
-    <button class="btn btn-orange" onclick="showModal()">
+    <button class="btn btn-orange" onclick="openPositionModal()">
       <i class="bi bi-plus-circle me-1"></i>Add Position
     </button>
   </div>
@@ -20,29 +20,43 @@
   <div class="col-md-6 fade-in" style="animation-delay:{{ loop.index0 * 0.06 }}s">
     <div class="card h-100" style="opacity:{{ '1' if pos.is_active else '0.65' }};border-top:4px solid {{ '#003366' if pos.is_active else '#9ca3af' }};">
       <div class="card-body p-4">
-        <div class="d-flex justify-content-between align-items-start mb-3">
+        <div class="d-flex justify-content-between align-items-start mb-2">
           <h5 class="fw-bold mb-0" style="font-size:.97rem;">{{ pos.title }}</h5>
           <span class="badge" style="border-radius:999px;background:{{ '#d1fae5' if pos.is_active else '#f3f4f6' }};color:{{ '#065f46' if pos.is_active else '#6b7280' }};">
             {{ 'Active' if pos.is_active else 'Closed' }}
           </span>
         </div>
-        <p class="text-muted mb-3" style="font-size:.8rem;">
+        <p class="text-muted mb-2" style="font-size:.8rem;">
           <i class="bi bi-building me-1"></i>{{ pos.department or '—' }}
           &nbsp;&bull;&nbsp;
           <i class="bi bi-geo-alt me-1"></i>{{ pos.location }}
         </p>
-        <div class="d-flex flex-wrap gap-2 mb-4">
+        <div class="d-flex flex-wrap gap-1 mb-3">
+          {% if pos.research_area %}
+          <span class="badge" style="background:#dbeafe;color:#1e40af;border-radius:999px;font-size:.68rem;">{{ pos.research_area }}</span>
+          {% endif %}
+          {% if pos.clearance_required and pos.clearance_required != 'None' %}
+          <span class="badge" style="background:#fee2e2;color:#991b1b;border-radius:999px;font-size:.68rem;"><i class="bi bi-shield-lock me-1"></i>{{ pos.clearance_required }}</span>
+          {% endif %}
           {% if pos.stipend %}
-          <span class="badge" style="background:#d1fae5;color:#065f46;border-radius:999px;">&#8377;{{ "{:,.0f}".format(pos.stipend) }}/mo</span>
+          <span class="badge" style="background:#d1fae5;color:#065f46;border-radius:999px;font-size:.68rem;">&#8377;{{ "{:,.0f}".format(pos.stipend) }}/mo</span>
           {% endif %}
           {% if pos.duration %}
-          <span class="badge" style="background:#dbeafe;color:#1e40af;border-radius:999px;">{{ pos.duration }}</span>
+          <span class="badge" style="background:#f3e8ff;color:#6b21a8;border-radius:999px;font-size:.68rem;">{{ pos.duration }}</span>
           {% endif %}
-          <span class="badge" style="background:#f3e8ff;color:#6b21a8;border-radius:999px;">{{ pos.total_seats }} seat(s)</span>
           {% if pos.deadline %}
-          <span class="badge" style="background:#fef3c7;color:#92400e;border-radius:999px;">Due: {{ pos.deadline | datefmt }}</span>
+          <span class="badge" style="background:#fef3c7;color:#92400e;border-radius:999px;font-size:.68rem;">Due: {{ pos.deadline | datefmt }}</span>
           {% endif %}
         </div>
+        {% if pos.required_skills %}
+        <div class="mb-3" style="font-size:.75rem;color:#6b7280;">
+          <i class="bi bi-tools me-1"></i>
+          {% for skill in pos.required_skills.split(',')[:5] %}
+          <span style="background:#f0f4f8;padding:.1em .5em;border-radius:999px;margin-right:.2rem;">{{ skill.strip() }}</span>
+          {% endfor %}
+          {% if pos.required_skills.split(',')|length > 5 %}+{{ pos.required_skills.split(',')|length - 5 }} more{% endif %}
+        </div>
+        {% endif %}
         <div class="d-flex justify-content-between align-items-center pt-2" style="border-top:1px solid #f1f5f9;">
           <span class="fw-bold" style="color:#003366;">
             <i class="bi bi-people me-1"></i>{{ pos.applicant_count }} applicant(s)
@@ -65,20 +79,18 @@
   </div>
   <h5 class="fw-bold mb-2">No Positions Yet</h5>
   <p class="text-muted mb-4" style="font-size:.88rem;">Create your first internship position to start receiving applications.</p>
-  <div>
-    <button class="btn btn-navy" onclick="showModal()">
-      <i class="bi bi-plus-circle me-2"></i>Create Position
-    </button>
-  </div>
+  <button class="btn btn-navy" onclick="openPositionModal()">
+    <i class="bi bi-plus-circle me-2"></i>Create Position
+  </button>
 </div>
 {% endif %}
 
-<!-- CUSTOM MODAL OVERLAY -->
-<div id="positionOverlay" onclick="hideModal()" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9998;"></div>
-<div id="positionModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;width:90%;max-width:700px;max-height:90vh;overflow-y:auto;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.3);">
-  <div style="background:linear-gradient(135deg,#003366,#004080);padding:1.1rem 1.5rem;border-radius:16px 16px 0 0;display:flex;justify-content:space-between;align-items:center;">
+<!-- ADD POSITION OVERLAY -->
+<div id="posBg" onclick="closePositionModal()" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9998;"></div>
+<div id="posBox" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;width:90%;max-width:740px;max-height:90vh;overflow-y:auto;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+  <div style="background:linear-gradient(135deg,#003366,#004080);padding:1.1rem 1.5rem;border-radius:16px 16px 0 0;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:1;">
     <h5 style="color:#fff;margin:0;font-weight:700;"><i class="bi bi-plus-circle me-2"></i>New Internship Position</h5>
-    <button onclick="hideModal()" style="background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer;">&times;</button>
+    <button onclick="closePositionModal()" style="background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer;">&times;</button>
   </div>
   <div style="padding:1.5rem;">
     <form method="POST">
@@ -101,31 +113,59 @@
           </select>
         </div>
         <div class="col-md-6">
+          <label class="form-label">Research Area</label>
+          <select name="research_area" class="form-select">
+            <option value="">Select Area</option>
+            {% for area in ['AI','Cyber Security','Embedded Systems','Radar','Aerospace'] %}
+            <option value="{{ area }}">{{ area }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
           <label class="form-label">Location</label>
           <input type="text" name="location" class="form-control" value="DRDO HQ, New Delhi"/>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
           <label class="form-label">Duration</label>
           <input type="text" name="duration" class="form-control" placeholder="e.g. 2 Months"/>
         </div>
-        <div class="col-md-4">
-          <label class="form-label">Stipend (&#8377;/month)</label>
+        <div class="col-md-3">
+          <label class="form-label">Stipend (&#8377;/mo)</label>
           <input type="number" name="stipend" class="form-control" step="500" placeholder="e.g. 8000"/>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-6">
           <label class="form-label">Application Deadline</label>
           <input type="date" name="deadline" class="form-control"/>
         </div>
+        <div class="col-md-6">
+          <label class="form-label">Clearance Required</label>
+          <select name="clearance_required" class="form-select">
+            <option value="None">None</option>
+            <option value="Confidential">Confidential</option>
+            <option value="Secret">Secret</option>
+          </select>
+        </div>
+
+        <!-- Required Skills Tags -->
+        <div class="col-12">
+          <label class="form-label">Required Skills</label>
+          <div id="skillsContainer" style="display:flex;flex-wrap:wrap;gap:.4rem;padding:.5rem .75rem;border:1px solid #e5eaf2;border-radius:10px;min-height:46px;background:#fff;cursor:text;" onclick="document.getElementById('skillInput').focus()">
+            <input id="skillInput" type="text" placeholder="Type skill + Enter" style="border:none;outline:none;font-size:.875rem;min-width:160px;flex:1;padding:.15rem 0;background:transparent;"/>
+          </div>
+          <input type="hidden" name="required_skills" id="skillsHidden"/>
+          <div class="form-text">Press Enter or comma to add. These drive AI matching scores.</div>
+        </div>
+
         <div class="col-12">
           <label class="form-label">Description</label>
           <textarea name="description" rows="3" class="form-control" placeholder="Describe the internship role…"></textarea>
         </div>
         <div class="col-12">
           <label class="form-label">Requirements</label>
-          <textarea name="requirements" rows="2" class="form-control" placeholder="Required skills, qualifications…"></textarea>
+          <textarea name="requirements" rows="2" class="form-control" placeholder="Required qualifications…"></textarea>
         </div>
         <div class="col-12 d-flex justify-content-end gap-2 pt-2">
-          <button type="button" onclick="hideModal()" class="btn btn-outline-secondary">Cancel</button>
+          <button type="button" onclick="closePositionModal()" class="btn btn-outline-secondary">Cancel</button>
           <button type="submit" class="btn btn-navy px-4"><i class="bi bi-save me-2"></i>Create Position</button>
         </div>
       </div>
@@ -136,15 +176,48 @@
 
 {% block extra_js %}
 <script>
-function showModal() {
-  document.getElementById('positionOverlay').style.display = 'block';
-  document.getElementById('positionModal').style.display = 'block';
+function openPositionModal() {
+  document.getElementById('posBg').style.display = 'block';
+  document.getElementById('posBox').style.display = 'block';
   document.body.style.overflow = 'hidden';
 }
-function hideModal() {
-  document.getElementById('positionOverlay').style.display = 'none';
-  document.getElementById('positionModal').style.display = 'none';
+function closePositionModal() {
+  document.getElementById('posBg').style.display = 'none';
+  document.getElementById('posBox').style.display = 'none';
   document.body.style.overflow = '';
 }
+
+// Skills tags
+const sc = document.getElementById('skillsContainer');
+const si = document.getElementById('skillInput');
+const sh = document.getElementById('skillsHidden');
+
+function getSkills() {
+  return Array.from(sc.querySelectorAll('.sk-tag'))
+    .map(t => t.childNodes[0].textContent.trim()).filter(Boolean);
+}
+function updateSkillsHidden() { sh.value = getSkills().join(','); }
+
+function addSkill(val) {
+  val = val.trim();
+  if (!val) return;
+  if (getSkills().map(s=>s.toLowerCase()).includes(val.toLowerCase())) return;
+  const tag = document.createElement('span');
+  tag.className = 'sk-tag';
+  tag.style.cssText = 'display:inline-flex;align-items:center;gap:.3rem;background:#e0f2fe;color:#0369a1;border-radius:999px;padding:.2em .75em;font-size:.8rem;font-weight:500;';
+  tag.innerHTML = val + '<button type="button" onclick="this.parentElement.remove();updateSkillsHidden();" style="background:none;border:none;color:#0369a1;cursor:pointer;padding:0;font-size:.75rem;">&times;</button>';
+  sc.insertBefore(tag, si);
+  si.value = '';
+  updateSkillsHidden();
+}
+
+si.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addSkill(this.value.replace(',','')); }
+  if (e.key === 'Backspace' && !this.value) {
+    const tags = sc.querySelectorAll('.sk-tag');
+    if (tags.length) { tags[tags.length-1].remove(); updateSkillsHidden(); }
+  }
+});
+si.addEventListener('blur', function() { if (this.value.trim()) addSkill(this.value); });
 </script>
 {% endblock %}

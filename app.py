@@ -128,6 +128,26 @@ def role_required(*roles):
         return decorated
     return decorator
 
+def calc_profile_completion(profile):
+    if not profile:
+        return 0
+    fields = [
+        profile.get("dob"),
+        profile.get("gender"),
+        profile.get("address"),
+        profile.get("college"),
+        profile.get("degree"),
+        profile.get("branch"),
+        profile.get("graduation_year"),
+        profile.get("cgpa"),
+        profile.get("skills"),
+        profile.get("resume_url"),
+        profile.get("linkedin_url"),
+        profile.get("github_url"),
+    ]
+    filled = sum(1 for f in fields if f)
+    return round((filled / len(fields)) * 100)     
+
 
 # ──────────────────────────────────────────────
 # PUBLIC ROUTES
@@ -233,18 +253,64 @@ def candidate_dashboard():
                            applications=apps, resume_match=resume_match)
 
 
+# REPLACE the candidate_apply route in app.py with this:
+
 @app.route("/candidate/apply", methods=["GET", "POST"])
 @login_required
 @role_required("candidate")
 def candidate_apply():
-    positions = query("""
+    # filters from query params
+    search    = request.args.get("q", "").strip()
+    area      = request.args.get("area", "").strip()
+    location  = request.args.get("location", "").strip()
+    duration  = request.args.get("duration", "").strip()
+    stipend_min = request.args.get("stipend_min", "").strip()
+    stipend_max = request.args.get("stipend_max", "").strip()
+
+    sql = """
         SELECT ip.*, u.full_name AS hr_name, d.name AS department
         FROM internship_positions ip
         JOIN users u ON u.id = ip.created_by
         LEFT JOIN departments d ON d.id = ip.department_id
         WHERE ip.is_active=1 AND (ip.deadline IS NULL OR ip.deadline >= CURDATE())
-        ORDER BY ip.created_at DESC
-    """)
+    """
+    args = []
+
+    if search:
+        sql += " AND (ip.title LIKE %s OR ip.description LIKE %s OR ip.required_skills LIKE %s)"
+        args += [f"%{search}%", f"%{search}%", f"%{search}%"]
+    if area:
+        sql += " AND ip.research_area = %s"
+        args.append(area)
+    if location:
+        sql += " AND ip.location LIKE %s"
+        args.append(f"%{location}%")
+    if duration:
+        sql += " AND ip.duration LIKE %s"
+        args.append(f"%{duration}%")
+    if stipend_min:
+        sql += " AND ip.stipend >= %s"
+        args.append(float(stipend_min))
+    if stipend_max:
+        sql += " AND ip.stipend <= %s"
+        args.append(float(stipend_max))
+
+    sql += " ORDER BY ip.created_at DESC"
+    positions = query(sql, args)
+
+    # already applied set
+    applied_ids = {r["position_id"] for r in
+                   query("SELECT position_id FROM applications WHERE candidate_id=%s",
+                         (session["user_id"],))}
+
+    for pos in positions:
+        pos["already_applied"] = pos["id"] in applied_ids
+
+    # distinct locations for filter dropdown
+    locations = [r["location"] for r in
+                 query("SELECT DISTINCT location FROM internship_positions WHERE is_active=1 AND location IS NOT NULL")]
+
+    research_areas = ["AI", "Cyber Security", "Embedded Systems", "Radar", "Aerospace"]
 
     if request.method == "POST":
         pos_id       = request.form["position_id"]
@@ -268,7 +334,11 @@ def candidate_apply():
         flash("Application submitted successfully!", "success")
         return redirect(url_for("candidate_dashboard"))
 
-    return render_template("candidate_apply.html", positions=positions)
+    return render_template("candidate_apply.html", positions=positions,
+                           locations=locations, research_areas=research_areas,
+                           search=search, area=area, location=location,
+                           duration=duration, stipend_min=stipend_min,
+                           stipend_max=stipend_max)
 
 
 @app.route("/candidate/application/<int:app_id>")
@@ -375,8 +445,9 @@ def candidate_profile():
             "breakdown": json.loads(profile["resume_match_json"]),
         }
 
-    return render_template("candidate_profile.html",
-                           profile=profile, resume_match=resume_match)
+    completion = calc_profile_completion(profile)
+    return render_template("candidate_profile.html", profile=profile,
+                       resume_match=resume_match, completion=completion)
 
 
 # ──────────────────────────────────────────────
@@ -468,8 +539,9 @@ def hr_positions():
         query("""
             INSERT INTO internship_positions
             (title, department_id, location, description, requirements,
-             duration, stipend, total_seats, deadline, created_by)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+             duration, stipend, total_seats, deadline, created_by,
+             research_area, required_skills, clearance_required)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
         """, (
             request.form["title"],
             request.form.get("department_id") or None,
@@ -480,7 +552,10 @@ def hr_positions():
             request.form.get("stipend") or None,
             int(request.form.get("total_seats", 1)),
             request.form.get("deadline") or None,
-            session["user_id"]
+            session["user_id"],
+            request.form.get("research_area") or None,
+            request.form.get("required_skills", ""),
+            request.form.get("clearance_required", "None"),
         ), commit=True)
         flash("Internship position created!", "success")
         return redirect(url_for("hr_positions"))

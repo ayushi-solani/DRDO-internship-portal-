@@ -2,7 +2,7 @@
 {% block title_suffix %} | Browse & Apply{% endblock %}
 
 {% block content %}
-<div class="page-header fade-in mb-4">
+<div class="page-header fade-in mb-4" style="overflow:visible;">
   <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
     <div>
       <h4 class="mb-1"><i class="bi bi-send-check me-2"></i>Browse & Apply</h4>
@@ -14,6 +14,60 @@
   </div>
 </div>
 
+<!-- FILTER BAR -->
+<form method="GET" class="card fade-in mb-4 p-3">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-3">
+      <label class="form-label" style="font-size:.78rem;">Search</label>
+      <input type="text" name="q" class="form-control form-control-sm" value="{{ search }}" placeholder="Title, skill, keyword…"/>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label" style="font-size:.78rem;">Research Area</label>
+      <select name="area" class="form-select form-select-sm">
+        <option value="">All Areas</option>
+        {% for a in research_areas %}
+        <option value="{{ a }}" {{ 'selected' if area == a }}>{{ a }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label" style="font-size:.78rem;">Location</label>
+      <select name="location" class="form-select form-select-sm">
+        <option value="">All Locations</option>
+        {% for l in locations %}
+        <option value="{{ l }}" {{ 'selected' if location == l }}>{{ l }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label" style="font-size:.78rem;">Duration</label>
+      <input type="text" name="duration" class="form-control form-control-sm" value="{{ duration }}" placeholder="e.g. 2 Months"/>
+    </div>
+    <div class="col-md-1">
+      <label class="form-label" style="font-size:.78rem;">Min ₹</label>
+      <input type="number" name="stipend_min" class="form-control form-control-sm" value="{{ stipend_min }}" placeholder="0"/>
+    </div>
+    <div class="col-md-1">
+      <label class="form-label" style="font-size:.78rem;">Max ₹</label>
+      <input type="number" name="stipend_max" class="form-control form-control-sm" value="{{ stipend_max }}" placeholder="Any"/>
+    </div>
+    <div class="col-md-1 d-flex gap-1">
+      <button type="submit" class="btn btn-navy btn-sm w-100"><i class="bi bi-funnel"></i></button>
+      {% if search or area or location or duration or stipend_min or stipend_max %}
+      <a href="{{ url_for('candidate_apply') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x"></i></a>
+      {% endif %}
+    </div>
+  </div>
+</form>
+
+<!-- RESULTS COUNT -->
+{% if search or area or location or duration or stipend_min or stipend_max %}
+<p class="text-muted mb-3 fade-in" style="font-size:.82rem;">
+  <i class="bi bi-info-circle me-1"></i>{{ positions|length }} position(s) found
+  {% if search %} for "<strong>{{ search }}</strong>"{% endif %}
+</p>
+{% endif %}
+
 {% if positions %}
 <div class="row g-4">
   {% for pos in positions %}
@@ -21,21 +75,35 @@
     <div class="position-card d-flex flex-column" style="overflow:hidden;">
       <div style="height:5px;background:linear-gradient(90deg,#003366,#FF6600);border-radius:var(--radius-lg) var(--radius-lg) 0 0;"></div>
       <div class="p-4 d-flex flex-column flex-grow-1">
-        <div class="d-flex justify-content-between align-items-start mb-3">
+
+        <!-- Tags row -->
+        <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-1">
           <span class="dept-tag">{{ pos.department or 'General' }}</span>
-          {% if pos.deadline %}
-          <span class="badge" style="background:#fef3c7;color:#92400e;border-radius:999px;font-size:.68rem;">
-            <i class="bi bi-calendar3"></i> {{ pos.deadline | datefmt }}
-          </span>
-          {% endif %}
+          <div class="d-flex gap-1 flex-wrap">
+            {% if pos.research_area %}
+            <span class="badge" style="background:#dbeafe;color:#1e40af;border-radius:999px;font-size:.65rem;">{{ pos.research_area }}</span>
+            {% endif %}
+            {% if pos.clearance_required and pos.clearance_required != 'None' %}
+            <span class="badge" style="background:#fee2e2;color:#991b1b;border-radius:999px;font-size:.65rem;">
+              <i class="bi bi-shield-lock me-1"></i>{{ pos.clearance_required }}
+            </span>
+            {% endif %}
+            {% if pos.already_applied %}
+            <span class="badge" style="background:#d1fae5;color:#065f46;border-radius:999px;font-size:.65rem;">
+              <i class="bi bi-check-circle me-1"></i>Applied
+            </span>
+            {% endif %}
+          </div>
         </div>
+
         <h5 class="fw-bold mb-1" style="font-size:.97rem;">{{ pos.title }}</h5>
-        <p class="text-muted mb-3" style="font-size:.78rem;">
+        <p class="text-muted mb-2" style="font-size:.78rem;">
           <i class="bi bi-geo-alt-fill me-1" style="color:#FF6600;"></i>{{ pos.location }}
         </p>
         <p class="text-secondary flex-grow-1" style="font-size:.82rem;line-height:1.6;">
-          {{ pos.description[:160] if pos.description else 'No description available.' }}{% if pos.description and pos.description|length > 160 %}…{% endif %}
+          {{ pos.description[:140] if pos.description else 'No description available.' }}{% if pos.description and pos.description|length > 140 %}…{% endif %}
         </p>
+
         <div class="d-flex flex-wrap gap-2 my-3">
           {% if pos.stipend %}
           <span class="badge" style="background:#d1fae5;color:#065f46;border-radius:999px;">
@@ -50,11 +118,24 @@
           <span class="badge" style="background:#f3e8ff;color:#6b21a8;border-radius:999px;">
             <i class="bi bi-people"></i> {{ pos.total_seats }} seat(s)
           </span>
+          {% if pos.deadline %}
+          <span class="badge" style="background:#fef3c7;color:#92400e;border-radius:999px;">
+            <i class="bi bi-calendar3"></i> {{ pos.deadline | datefmt }}
+          </span>
+          {% endif %}
         </div>
+
+        {% if pos.already_applied %}
+        <button class="btn btn-outline-success w-100 mt-auto" disabled>
+          <i class="bi bi-check-circle me-2"></i>Already Applied
+        </button>
+        {% else %}
         <button class="btn btn-navy w-100 mt-auto"
-                onclick="showApplyModal('{{ pos.id }}', '{{ pos.title|replace("'", "\\'") }}', '{{ (pos.department or 'General')|replace("'", "\\'") }}', '{{ (pos.requirements or 'See position description.')|replace("'", "\\'") }}')">
+                onclick="openApplyModal('{{ pos.id }}', '{{ pos.title|replace("'", "\\'") }}', '{{ (pos.department or 'General')|replace("'", "\\'") }}', '{{ (pos.requirements or 'See position description.')|replace("'", "\\'") }}')">
           <i class="bi bi-send me-2"></i>Apply Now
         </button>
+        {% endif %}
+
       </div>
     </div>
   </div>
@@ -65,27 +146,33 @@
   <div style="width:80px;height:80px;background:#f0f4f8;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;">
     <i class="bi bi-briefcase" style="font-size:2rem;color:#003366;"></i>
   </div>
-  <h5 class="fw-bold mb-2">No Open Positions</h5>
-  <p class="text-muted" style="font-size:.88rem;">No internships are open right now. Check back later.</p>
+  <h5 class="fw-bold mb-2">No Positions Found</h5>
+  <p class="text-muted mb-4" style="font-size:.88rem;">
+    {% if search or area or location or duration or stipend_min or stipend_max %}
+    No positions match your filters. <a href="{{ url_for('candidate_apply') }}">Clear filters</a>
+    {% else %}
+    No internships are open right now. Check back later.
+    {% endif %}
+  </p>
 </div>
 {% endif %}
 
-<!-- CUSTOM APPLY OVERLAY -->
-<div id="applyOverlay" onclick="hideApplyModal()" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9998;"></div>
-<div id="applyModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;width:90%;max-width:680px;max-height:90vh;overflow-y:auto;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+<!-- APPLY OVERLAY -->
+<div id="applyBg" onclick="closeApplyModal()" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9998;"></div>
+<div id="applyBox" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;width:90%;max-width:680px;max-height:90vh;overflow-y:auto;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.3);">
   <div style="background:linear-gradient(135deg,#003366,#004080);padding:1.1rem 1.5rem;border-radius:16px 16px 0 0;">
     <div class="d-flex justify-content-between align-items-start">
       <div>
         <h5 style="color:#fff;margin:0;font-weight:700;"><i class="bi bi-send-check me-2"></i>Submit Application</h5>
-        <small style="color:rgba(255,255,255,.75);" id="modalSubtitle"></small>
+        <small style="color:rgba(255,255,255,.75);" id="applySubtitle"></small>
       </div>
-      <button onclick="hideApplyModal()" style="background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer;">&times;</button>
+      <button onclick="closeApplyModal()" style="background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer;">&times;</button>
     </div>
   </div>
   <div style="padding:1.5rem;">
     <form method="POST">
-      <input type="hidden" name="position_id" id="modalPosId"/>
-      <div class="alert alert-info mb-4" id="modalReq" style="font-size:.82rem;"></div>
+      <input type="hidden" name="position_id" id="applyPosId"/>
+      <div class="alert alert-info mb-4" id="applyReq" style="font-size:.82rem;"></div>
       <div class="mb-3">
         <label class="form-label">Cover Letter <span class="text-muted fw-normal">(optional but recommended)</span></label>
         <textarea name="cover_letter" rows="6" class="form-control"
@@ -96,7 +183,7 @@
         Complete your <a href="{{ url_for('candidate_profile') }}">profile</a> before applying.
       </p>
       <div class="d-flex justify-content-end gap-2">
-        <button type="button" onclick="hideApplyModal()" class="btn btn-outline-secondary">Cancel</button>
+        <button type="button" onclick="closeApplyModal()" class="btn btn-outline-secondary">Cancel</button>
         <button type="submit" class="btn btn-navy px-4">
           <i class="bi bi-send-check me-2"></i>Confirm & Submit
         </button>
@@ -108,17 +195,17 @@
 
 {% block extra_js %}
 <script>
-function showApplyModal(id, title, dept, req) {
-  document.getElementById('modalPosId').value = id;
-  document.getElementById('modalSubtitle').textContent = title + ' · ' + dept;
-  document.getElementById('modalReq').innerHTML = '<strong>Requirements:</strong> ' + req;
-  document.getElementById('applyOverlay').style.display = 'block';
-  document.getElementById('applyModal').style.display = 'block';
+function openApplyModal(id, title, dept, req) {
+  document.getElementById('applyPosId').value = id;
+  document.getElementById('applySubtitle').textContent = title + ' · ' + dept;
+  document.getElementById('applyReq').innerHTML = '<strong>Requirements:</strong> ' + req;
+  document.getElementById('applyBg').style.display = 'block';
+  document.getElementById('applyBox').style.display = 'block';
   document.body.style.overflow = 'hidden';
 }
-function hideApplyModal() {
-  document.getElementById('applyOverlay').style.display = 'none';
-  document.getElementById('applyModal').style.display = 'none';
+function closeApplyModal() {
+  document.getElementById('applyBg').style.display = 'none';
+  document.getElementById('applyBox').style.display = 'none';
   document.body.style.overflow = '';
 }
 </script>
