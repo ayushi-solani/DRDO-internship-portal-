@@ -158,8 +158,11 @@
       <div class="sidebar-section">Admin Panel</div>
       <ul class="nav flex-column">
         <li><a class="nav-link {% if request.endpoint=='admin_dashboard' %}active{% endif %}"
-               href="{{ url_for('admin_dashboard') }}">
-          <i class="bi bi-speedometer2"></i> Dashboard</a></li>
+           href="{{ url_for('admin_dashboard') }}">
+         <i class="bi bi-speedometer2"></i> Dashboard</a></li>
+        <li><a class="nav-link {% if request.endpoint=='admin_departments' %}active{% endif %}"
+           href="{{ url_for('admin_departments') }}">
+        <i class="bi bi-building"></i> Departments</a></li>
       </ul>
       {% endif %}
       <div class="sidebar-footer">
