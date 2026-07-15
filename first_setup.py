@@ -51,6 +51,8 @@ def check_python():
 def install_deps():
     step(2, "Installing Python dependencies…")
     req = os.path.join(os.path.dirname(__file__), "requirements.txt")
+    
+    # 1. Install pip packages
     result = subprocess.run(
         [sys.executable, "-m", "pip", "install", "-r", req, "-q"],
         capture_output=True, text=True
@@ -58,7 +60,17 @@ def install_deps():
     if result.returncode != 0:
         warn("pip output:\n" + result.stderr)
         fail("Dependency installation failed.")
-    ok("All dependencies installed (flask, mysql-connector-python, werkzeug)")
+        
+    # 2. Download the spaCy English model
+    spacy_result = subprocess.run(
+        [sys.executable, "-m", "spacy", "download", "en_core_web_sm", "-q"],
+        capture_output=True, text=True
+    )
+    if spacy_result.returncode != 0:
+        warn("spaCy model download failed:\n" + spacy_result.stderr)
+        fail("Could not download en_core_web_sm.")
+        
+    ok("All dependencies installed (flask, mysql, werkzeug, spacy, etc.)")
 
 # ── 3. Collect MySQL credentials ────────────────────────────
 def get_credentials():
