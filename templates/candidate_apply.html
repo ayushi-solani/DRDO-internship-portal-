@@ -139,6 +139,27 @@
       </div>
     </div>
   </div>
+
+  <!-- Hidden, pre-rendered skill-gap pills for this position — copied into the modal on open -->
+  <div id="skillGap-{{ pos.id }}" style="display:none;">
+    {% if pos.skill_gap %}
+      {% for skill in pos.skill_gap.matched %}
+        <span class="skill-tag" style="display:inline-flex;align-items:center;gap:.3rem;background:#dcfce7;color:#166534;border-radius:999px;padding:.2em .75em;font-size:.78rem;font-weight:500;margin:.15rem;">
+          <i class="bi bi-check-circle"></i>{{ skill }}
+        </span>
+      {% endfor %}
+      {% for skill in pos.skill_gap.missing %}
+        <span class="skill-tag" style="display:inline-flex;align-items:center;gap:.3rem;background:#fee2e2;color:#991b1b;border-radius:999px;padding:.2em .75em;font-size:.78rem;font-weight:500;margin:.15rem;">
+          <i class="bi bi-x-circle"></i>{{ skill }}
+        </span>
+      {% endfor %}
+      {% if not pos.skill_gap.matched and not pos.skill_gap.missing %}
+        <span class="text-muted" style="font-size:.8rem;">No required skills listed for this position.</span>
+      {% endif %}
+    {% else %}
+      <span class="text-muted" style="font-size:.8rem;">Add skills to your profile to see your match here.</span>
+    {% endif %}
+  </div>
   {% endfor %}
 </div>
 {% else %}
@@ -172,7 +193,11 @@
   <div style="padding:1.5rem;">
     <form method="POST">
       <input type="hidden" name="position_id" id="applyPosId"/>
-      <div class="alert alert-info mb-4" id="applyReq" style="font-size:.82rem;"></div>
+      <div class="alert alert-info mb-3" id="applyReq" style="font-size:.82rem;"></div>
+      <div class="mb-4">
+        <label class="form-label mb-2">Your Skill Match</label>
+        <div id="applySkillGap"></div>
+      </div>
       <div class="mb-3">
         <label class="form-label">Cover Letter <span class="text-muted fw-normal">(optional but recommended)</span></label>
         <textarea name="cover_letter" rows="6" class="form-control"
@@ -199,6 +224,11 @@ function openApplyModal(id, title, dept, req) {
   document.getElementById('applyPosId').value = id;
   document.getElementById('applySubtitle').textContent = title + ' · ' + dept;
   document.getElementById('applyReq').innerHTML = '<strong>Requirements:</strong> ' + req;
+
+  // Skill gap pills were already computed server-side — just copy them in, no fetch.
+  var src = document.getElementById('skillGap-' + id);
+  document.getElementById('applySkillGap').innerHTML = src ? src.innerHTML : '';
+
   document.getElementById('applyBg').style.display = 'block';
   document.getElementById('applyBox').style.display = 'block';
   document.body.style.overflow = 'hidden';

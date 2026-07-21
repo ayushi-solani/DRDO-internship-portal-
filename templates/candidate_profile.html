@@ -249,6 +249,68 @@
     </div>
   </div>
 </form>
+
+{% if extracted_skills or unverified_skills or confirmed_skills %}
+<div class="card fade-in mb-4">
+  <div class="card-header d-flex align-items-center gap-2">
+    <i class="bi bi-stars text-muted"></i><span>Skills Found In Your Resume</span>
+  </div>
+  <div class="card-body p-4">
+
+    {% if extracted_skills or confirmed_skills %}
+    <div class="mb-3">
+      <label class="form-label">Verified Skills</label>
+      <div style="display:flex;flex-wrap:wrap;gap:.4rem;">
+        {% for skill in extracted_skills %}
+        <div style="display:inline-flex;align-items:center;gap:.4rem;background:#dcfce7;color:#166534;border-radius:999px;padding:.25em .5em .25em .9em;font-size:.8rem;font-weight:500;">
+          <i class="bi bi-check-circle"></i>{{ skill }}
+          <form method="POST" action="{{ url_for('candidate_remove_skill') }}" style="display:inline;">
+            <input type="hidden" name="skill" value="{{ skill }}"/>
+            <button type="submit" title="Remove this skill" style="background:#991b1b;color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:.65rem;cursor:pointer;line-height:1;">&times;</button>
+          </form>
+        </div>
+        {% endfor %}
+        {% for skill in confirmed_skills %}
+        <div style="display:inline-flex;align-items:center;gap:.4rem;background:#dcfce7;color:#166534;border-radius:999px;padding:.25em .5em .25em .9em;font-size:.8rem;font-weight:500;">
+          <i class="bi bi-check-circle"></i>{{ skill }}
+          <form method="POST" action="{{ url_for('candidate_remove_skill') }}" style="display:inline;">
+            <input type="hidden" name="skill" value="{{ skill }}"/>
+            <button type="submit" title="Remove this skill" style="background:#991b1b;color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:.65rem;cursor:pointer;line-height:1;">&times;</button>
+          </form>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if unverified_skills %}
+    <div>
+      <label class="form-label">Unverified Skills <span class="text-muted fw-normal">(found in your resume, not in our skill list — confirm the ones that are real)</span></label>
+      <div style="display:flex;flex-wrap:wrap;gap:.5rem;">
+        {% for skill in unverified_skills %}
+        <div style="display:inline-flex;align-items:center;gap:.4rem;background:#fef9c3;color:#854d0e;border-radius:999px;padding:.25em .5em .25em .9em;font-size:.8rem;font-weight:500;">
+          <i class="bi bi-question-circle"></i>{{ skill }}
+          <form method="POST" action="{{ url_for('candidate_confirm_skill') }}" style="display:inline;">
+            <input type="hidden" name="skill" value="{{ skill }}"/>
+            <button type="submit" title="Confirm this skill" style="background:#166534;color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:.65rem;cursor:pointer;line-height:1;">✓</button>
+          </form>
+          <form method="POST" action="{{ url_for('candidate_remove_skill') }}" style="display:inline;">
+            <input type="hidden" name="skill" value="{{ skill }}"/>
+            <button type="submit" title="Remove this skill" style="background:#991b1b;color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:.65rem;cursor:pointer;line-height:1;">&times;</button>
+          </form>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if not extracted_skills and not confirmed_skills and not unverified_skills %}
+    <p class="text-muted mb-0" style="font-size:.85rem;">Upload your resume above to auto-detect skills.</p>
+    {% endif %}
+
+  </div>
+</div>
+{% endif %}
 {% endblock %}
 
 {% block extra_js %}

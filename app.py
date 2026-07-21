@@ -42,6 +42,17 @@ except Exception as exc:
     _resume_model_error = str(exc)
     print(f"[warn] Resume matcher unavailable: {_resume_model_error}")
 
+# ──────────────────────────────────────────────
+# SKILL GAP ENGINE (verified + unverified extraction, matching)
+# ──────────────────────────────────────────────
+_skill_gap_error = None
+try:
+    from skill_gap import (extract_skills_from_resume, compute_skill_gap,
+                            build_candidate_skill_string)
+except Exception as exc:
+    _skill_gap_error = str(exc)
+    print(f"[warn] Skill gap engine unavailable: {_skill_gap_error}")
+
 
 def allowed_resume_file(filename: str) -> bool:
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_RESUME_EXTENSIONS
@@ -303,8 +314,17 @@ def candidate_apply():
                    query("SELECT position_id FROM applications WHERE candidate_id=%s",
                          (session["user_id"],))}
 
+    # candidate profile → combined skill string (self-declared + verified + confirmed unverified)
+    profile = query("SELECT * FROM candidate_profiles WHERE user_id=%s",
+                     (session["user_id"],), one=True)
+    candidate_skill_str = build_candidate_skill_string(profile) if (profile and _skill_gap_error is None) else ""
+
     for pos in positions:
         pos["already_applied"] = pos["id"] in applied_ids
+        if _skill_gap_error is None:
+            pos["skill_gap"] = compute_skill_gap(candidate_skill_str, pos.get("required_skills") or "")
+        else:
+            pos["skill_gap"] = None
 
     # distinct locations for filter dropdown
     locations = [r["location"] for r in
@@ -414,6 +434,24 @@ def candidate_profile():
             resume_file.save(save_path)
             resume_url = f"uploads/resumes/{filename}"
 
+            # Skill extraction (verified + unverified) — independent of role-matcher
+            if _skill_gap_error is None:
+                try:
+                    skills_result = extract_skills_from_resume(save_path)
+                    query("""
+                        UPDATE candidate_profiles SET
+                          extracted_skills=%s, unverified_skills=%s
+                        WHERE user_id=%s
+                    """, (
+                        json.dumps(skills_result["verified"]),
+                        json.dumps(skills_result["unverified"]),
+                        session["user_id"]
+                    ), commit=True)
+                except ValueError as exc:
+                    flash(f"Skill extraction skipped: {exc}", "warning")
+            else:
+                print(f"[warn] Skill extraction skipped: {_skill_gap_error}")
+
             results, error = run_resume_match(save_path)
             if error:
                 query("UPDATE candidate_profiles SET resume_url=%s WHERE user_id=%s",
@@ -446,8 +484,54 @@ def candidate_profile():
         }
 
     completion = calc_profile_completion(profile)
+
+    extracted_skills   = json.loads(profile["extracted_skills"]) if (profile and profile.get("extracted_skills")) else []
+    unverified_skills  = json.loads(profile["unverified_skills"]) if (profile and profile.get("unverified_skills")) else []
+    confirmed_skills   = json.loads(profile["confirmed_unverified_skills"]) if (profile and profile.get("confirmed_unverified_skills")) else []
+
     return render_template("candidate_profile.html", profile=profile,
-                       resume_match=resume_match, completion=completion)
+                       resume_match=resume_match, completion=completion,
+                       extracted_skills=extracted_skills,
+                       unverified_skills=unverified_skills,
+                       confirmed_skills=confirmed_skills)
+
+
+@app.route("/candidate/skill/confirm", methods=["POST"])
+@login_required
+@role_required("candidate")
+def candidate_confirm_skill():
+    """Move one skill from unverified_skills -> confirmed_unverified_skills."""
+    skill = request.form.get("skill", "").strip()
+    profile = query("SELECT unverified_skills, confirmed_unverified_skills FROM candidate_profiles WHERE user_id=%s",
+                     (session["user_id"],), one=True)
+    if profile and skill:
+        unverified = json.loads(profile["unverified_skills"] or "[]")
+        confirmed  = json.loads(profile["confirmed_unverified_skills"] or "[]")
+        if skill in unverified:
+            unverified.remove(skill)
+        if skill not in confirmed:
+            confirmed.append(skill)
+        query("UPDATE candidate_profiles SET unverified_skills=%s, confirmed_unverified_skills=%s WHERE user_id=%s",
+              (json.dumps(unverified), json.dumps(confirmed), session["user_id"]), commit=True)
+        flash(f'"{skill}" added to your verified skills.', "success")
+    return redirect(url_for("candidate_profile"))
+
+
+@app.route("/candidate/skill/remove", methods=["POST"])
+@login_required
+@role_required("candidate")
+def candidate_remove_skill():
+    """Discard one skill from unverified_skills entirely."""
+    skill = request.form.get("skill", "").strip()
+    profile = query("SELECT unverified_skills FROM candidate_profiles WHERE user_id=%s",
+                     (session["user_id"],), one=True)
+    if profile and skill:
+        unverified = json.loads(profile["unverified_skills"] or "[]")
+        if skill in unverified:
+            unverified.remove(skill)
+        query("UPDATE candidate_profiles SET unverified_skills=%s WHERE user_id=%s",
+              (json.dumps(unverified), session["user_id"]), commit=True)
+    return redirect(url_for("candidate_profile"))
 
 
 # ──────────────────────────────────────────────
